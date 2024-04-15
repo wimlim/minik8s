@@ -1,7 +1,5 @@
 package scheduler
 
-import "fmt"
-
-func Scheduler() {
-	fmt.Println("scheduler")
+func Scheduler() string {
+	return "Scheduler"
 }
