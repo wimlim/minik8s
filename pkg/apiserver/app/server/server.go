@@ -1,7 +1,7 @@
 package server
 import(
 	"fmt"
-	"minik8s/pkg/config"
+	"minik8s/pkg/apiserver/apiconfig"
 	"minik8s/pkg/apiserver/app/handler"
 	"github.com/gin-gonic/gin"
 )
@@ -27,21 +27,21 @@ func SetServer(s *server) *server{
 
 func (s *server) Bind(){
 	//NODE
-	s.router.GET(config.URL_AllNodes, 	handler.GetNodes);
-	s.router.POST((config.URL_Node),	handler.AddNode	);
-	s.router.DELETE((config.URL_Node),	handler.DeleteNode);
-	s.router.PUT((config.URL_Node),	handler.UpdateNode);
-	s.router.GET((config.URL_Node),	handler.GetNode);
-	s.router.GET((config.URL_NodeAllPods),	handler.GetNodePods);
-	s.router.GET((config.URL_NodeStatus),	handler.GetNodeStatus);
+	s.router.GET(apiconfig.URL_AllNodes, 	handler.GetNodes);
+	s.router.POST((apiconfig.URL_Node),	handler.AddNode	);
+	s.router.DELETE((apiconfig.URL_Node),	handler.DeleteNode);
+	s.router.PUT((apiconfig.URL_Node),	handler.UpdateNode);
+	s.router.GET((apiconfig.URL_Node),	handler.GetNode);
+	s.router.GET((apiconfig.URL_NodeAllPods),	handler.GetNodePods);
+	s.router.GET((apiconfig.URL_NodeStatus),	handler.GetNodeStatus);
 	//POD
-	s.router.GET((config.URL_GlobalPods),	handler.GetGlobalPods);
-	s.router.GET((config.URL_AllPods),	handler.GetAllPods);
-	s.router.POST((config.URL_Pod),	handler.AddPod);
-	s.router.DELETE((config.URL_Pod),	handler.DeletePod);
-	s.router.PUT((config.URL_Pod),	handler.UpdatePod);
-	s.router.GET((config.URL_Pod),	handler.GetPod);
-	s.router.GET((config.URL_PodStatus),	handler.GetPodStatus);
+	s.router.GET((apiconfig.URL_GlobalPods),	handler.GetGlobalPods);
+	s.router.GET((apiconfig.URL_AllPods),	handler.GetAllPods);
+	s.router.POST((apiconfig.URL_Pod),	handler.AddPod);
+	s.router.DELETE((apiconfig.URL_Pod),	handler.DeletePod);
+	s.router.PUT((apiconfig.URL_Pod),	handler.UpdatePod);
+	s.router.GET((apiconfig.URL_Pod),	handler.GetPod);
+	s.router.GET((apiconfig.URL_PodStatus),	handler.GetPodStatus);
 	//SERVICE
 
 	fmt.Println("server bind success")
