@@ -18,7 +18,9 @@ func AddNode(c *gin.Context){
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
 	value := []byte("node")
 	err := etcd.EtcdKV.Put(key, value)
-	if(err != nil){}
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{"add": "success"})
 }
 
@@ -27,7 +29,9 @@ func DeleteNode(c *gin.Context){
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
 	err := etcd.EtcdKV.Delete(key)
-	if(err != nil){}
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"delete": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{"delete": "success"})
 }
 
@@ -37,7 +41,9 @@ func UpdateNode(c *gin.Context){
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
 	value := []byte("node")
 	err := etcd.EtcdKV.Put(key, value)	
-	if(err != nil){}	
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
+	}	
 	c.JSON(http.StatusOK, gin.H{"update": "success"})
 }
 
@@ -47,7 +53,9 @@ func GetNode(c *gin.Context){
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
 	res,err := etcd.EtcdKV.Get(key);
-	if(err != nil){}
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
 
@@ -56,7 +64,9 @@ func GetNodePods(c *gin.Context){
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/pods", name)
 	res ,err := etcd.EtcdKV.Get(key)
-	if(err != nil){}
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
 
@@ -66,6 +76,8 @@ func GetNodeStatus(c *gin.Context){
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/status", name)
 	res ,err := etcd.EtcdKV.Get(key)
-	if(err != nil){}
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }

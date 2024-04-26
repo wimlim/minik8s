@@ -23,7 +23,9 @@ func AddPod(c *gin.Context){
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/%s", namespace, name)
 	value := []byte("pod")
 	err := etcd.EtcdKV.Put(key, value)
-	if(err != nil){}
+	if(err != nil){	
+		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{"add": "success"})
 	
 }
@@ -34,7 +36,9 @@ func DeletePod(c *gin.Context){
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/%s", namespace, name)
 	err := etcd.EtcdKV.Delete(key)	
-	if(err != nil){}
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"delete": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{"delete": "success"})
 }
 
@@ -46,7 +50,9 @@ func UpdatePod(c *gin.Context){
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/%s", namespace, name)
 	value := []byte("pod")
 	err := etcd.EtcdKV.Put(key, value)
-	if(err != nil){}
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{"update": "success"})
 }
 
@@ -56,7 +62,9 @@ func GetPod(c *gin.Context){
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/%s", namespace, name)
 	res,err := etcd.EtcdKV.Get(key);
-	if(err != nil){}
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"data": res,
 	})
