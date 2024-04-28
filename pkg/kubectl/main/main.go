@@ -1,9 +1,9 @@
 package main
 
-import(
-	"minik8s/pkg/kubectl/cmd"
+import (
+	cmd "minik8s/pkg/kubectl/app"
 )
 
-func main(){
+func main() {
 	cmd.Execute()
 }
