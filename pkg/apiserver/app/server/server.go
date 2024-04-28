@@ -1,7 +1,7 @@
 package server
 import(
 	"fmt"
-	"minik8s/pkg/apiserver/apiconfig"
+	"minik8s/pkg/config/apiconfig"
 	"minik8s/pkg/apiserver/app/handler"
 	"github.com/gin-gonic/gin"
 )

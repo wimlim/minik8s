@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
+	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
 	"net/http"
 
@@ -18,15 +20,19 @@ func GetAllPods(c *gin.Context){
 
 func AddPod(c *gin.Context){
 	fmt.Println("addPod")
+	var pod apiobj.Pod
+	c.ShouldBind(&pod)
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/%s", namespace, name)
-	value := []byte("pod")
-	err := etcd.EtcdKV.Put(key, value)
-	if(err != nil){	
+
+	podJson,err := json.Marshal(pod)
+	if(err != nil){
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
 	}
-	c.JSON(http.StatusOK, gin.H{"add": "success"})
+
+	etcd.EtcdKV.Put(key, podJson)
+	c.JSON(http.StatusOK, gin.H{"add": string(podJson)})
 	
 }
 
@@ -66,7 +72,7 @@ func GetPod(c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"data": res,
+		"data": string(res),
 	})
 }
 

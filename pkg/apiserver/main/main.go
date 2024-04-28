@@ -3,7 +3,7 @@ package main
 import(
 	"fmt"
 	"minik8s/pkg/apiserver/app/server"
-	"minik8s/pkg/apiserver/apiconfig"
+	"minik8s/pkg/config/apiconfig"
 )
 
 func main() {
