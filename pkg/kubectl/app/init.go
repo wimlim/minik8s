@@ -16,6 +16,7 @@ var AllCommands = cobra.Command{
 func init(){
 	AllCommands.AddCommand(applyCmd)
 	AllCommands.AddCommand(deleteCmd)
+	AllCommands.AddCommand(getCmd)
 }
 
 func Execute(){

@@ -6,7 +6,7 @@ import (
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
 	"net/http"
-
+	"minik8s/pkg/message"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +33,18 @@ func AddPod(c *gin.Context){
 
 	etcd.EtcdKV.Put(key, podJson)
 	c.JSON(http.StatusOK, gin.H{"add": string(podJson)})
-	
+
+
+	msg := message.Message{
+		Type:         "Add",
+		URL:          key,
+		Name:         name,
+		Content:      string(podJson),
+	}
+	msg_byte ,_ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.ScheduleQueue, msg_byte)
 }
 
 func DeletePod(c *gin.Context){

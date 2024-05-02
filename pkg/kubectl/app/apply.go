@@ -11,6 +11,7 @@ import (
 	"os"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+	"strings"
 )
 
 var applyCmd = &cobra.Command{
@@ -57,14 +58,22 @@ func applyPod(content []byte){
 		fmt.Println("unmarshal pod error")
 		return
 	}
-	URL := apiconfig.ServerLocaltURL+"/api/v1/namespaces/default/pods/pod1"
+	if(pod.MetaData.Namespace == ""){
+		pod.MetaData.Namespace = "default"
+	}
+	
+	URL := apiconfig.URL_Pod
+	URL = strings.Replace(URL,":namespace",pod.MetaData.Namespace,-1)
+	URL = strings.Replace(URL,":name",pod.MetaData.Name,-1)
+	HttpUrl := apiconfig.GetServerLocalUrl() + URL
+
 	jsonData, err := json.Marshal(pod)
 	//fmt.Println(string(jsonData))
 	if err != nil {
 		fmt.Println("marshal pod error")
 		return
 	}
-	response, err := http.Post(URL, "application/json", bytes.NewBuffer(jsonData))
+	response, err := http.Post(HttpUrl, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("post error")
 		return
