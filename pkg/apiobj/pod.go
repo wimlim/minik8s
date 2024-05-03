@@ -41,9 +41,16 @@ type PodSpec struct{
 	Volumes []Volume	`yaml:"volumes" json:"volumes"`
 }
 
+type PodStatus struct{
+	Phase string	`yaml:"phase" json:"phase"`
+	PodIP string	`yaml:"podIP" json:"podIP"`
+	UpdateTime string	`yaml:"updateTime" json:"updateTime"`
+}
+
 type Pod struct{
 	ApiVersion string	`yaml:"apiVersion" json:"apiVersion"`
 	Kind string	`yaml:"kind" json:"kind"`
 	MetaData MetaData	`yaml:"metadata" json:"metadata"`
 	Spec PodSpec	`yaml:"spec" json:"spec"`
+	Status PodStatus	`yaml:"status" json:"status"`
 }
