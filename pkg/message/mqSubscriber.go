@@ -11,7 +11,7 @@ type Subscriber struct {
 }
 
 func NewSubscriber() *Subscriber {
-	url := RabbitMQDefaultURL()
+	url := RabbitMQURL()
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		panic(err)

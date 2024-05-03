@@ -10,7 +10,7 @@ type Publisher struct {
 }
 
 func NewPublisher() *Publisher {
-	url := RabbitMQDefaultURL()
+	url := RabbitMQURL()
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		panic(err)

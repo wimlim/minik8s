@@ -17,6 +17,7 @@ func init(){
 	AllCommands.AddCommand(applyCmd)
 	AllCommands.AddCommand(deleteCmd)
 	AllCommands.AddCommand(getCmd)
+	AllCommands.AddCommand(describeCmd)
 }
 
 func Execute(){

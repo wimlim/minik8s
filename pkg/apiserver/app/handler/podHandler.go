@@ -41,10 +41,10 @@ func AddPod(c *gin.Context){
 		Name:         name,
 		Content:      string(podJson),
 	}
-	msg_byte ,_ := json.Marshal(msg)
+	msgJson ,_ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.ScheduleQueue, msg_byte)
+	p.Publish(message.ScheduleQueue, msgJson)
 }
 
 func DeletePod(c *gin.Context){

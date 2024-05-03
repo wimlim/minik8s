@@ -9,7 +9,13 @@ const(
 	ServerMasterIP = "10.119.13.134"
 )
 
-func GetServerLocalUrl()(string){
-	ServerLocaltURL := fmt.Sprintf(HttpScheme + ServerLocalIP +":%d",ServerDefaultPort)
-	return ServerLocaltURL;
+func GetMasterIP()(string){
+	return ServerLocalIP
+	// return ServerMasterIP
+}
+func GetApiServerUrl()(string){
+
+	apiserver_ip := GetMasterIP()
+	ServerURL := fmt.Sprintf(HttpScheme + apiserver_ip +":%d",ServerDefaultPort)
+	return ServerURL;
 }

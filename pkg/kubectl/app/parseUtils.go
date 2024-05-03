@@ -1,12 +1,12 @@
 package cmd
 
 import(
-	"fmt"
+	// "fmt"
 	"gopkg.in/yaml.v3"
 )
 
-func parseApiObj(filecontent []byte) (string, error){
-	fmt.Println("parseApiObj")
+func parseApiObjKind(filecontent []byte) (string, error){
+	// fmt.Println("parseApiObj")
 	var obj map[string]interface{}
 	err := yaml.Unmarshal(filecontent, &obj)
 	if err != nil {

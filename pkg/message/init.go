@@ -4,7 +4,7 @@ import(
 )
 
 func init(){
-	url := RabbitMQDefaultURL()
+	url := RabbitMQURL()
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		panic(err)

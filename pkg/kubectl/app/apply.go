@@ -20,6 +20,7 @@ var applyCmd = &cobra.Command{
 	Run:	applyHandler,	
 }
 
+//kubectl apply pod.yaml
 func applyHandler(cmd *cobra.Command, args []string){
 	if(len(args) == 0){
 		fmt.Println("no args")
@@ -38,7 +39,7 @@ func applyHandler(cmd *cobra.Command, args []string){
 		return
 	}
 
-	kind, err := parseApiObj(content)
+	kind, err := parseApiObjKind(content)
 	if err != nil {
 		fmt.Println("parse api obj error")
 		return
@@ -65,8 +66,8 @@ func applyPod(content []byte){
 	URL := apiconfig.URL_Pod
 	URL = strings.Replace(URL,":namespace",pod.MetaData.Namespace,-1)
 	URL = strings.Replace(URL,":name",pod.MetaData.Name,-1)
-	HttpUrl := apiconfig.GetServerLocalUrl() + URL
-
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+	fmt.Println("Post " +  HttpUrl)
 	jsonData, err := json.Marshal(pod)
 	//fmt.Println(string(jsonData))
 	if err != nil {
