@@ -1,9 +1,10 @@
 package message
-import(
+
+import (
 	"github.com/streadway/amqp"
 )
 
-func init(){
+func init() {
 	url := RabbitMQURL()
 	conn, err := amqp.Dial(url)
 	if err != nil {
