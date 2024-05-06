@@ -86,9 +86,17 @@ func addPod(msg message.Message) {
 		fmt.Println("marshal pod error")
 		return
 	}
-	response, err := http.Post(HttpUrl, "application/json", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest(http.MethodPut, HttpUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
-		fmt.Println("post error")
+		fmt.Println("create put request error:", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Println("put error:", err)
 		return
 	}
 	defer response.Body.Close()
