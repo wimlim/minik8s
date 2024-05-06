@@ -1,11 +1,6 @@
 package apiobj
 
-type PodMetaData struct {
-	UUID      string            `yaml:"uuid" json:"uuid"`
-	Name      string            `yaml:"name" json:"name"`
-	Namespace string            `yaml:"namespace" json:"namespace"`
-	Labels    map[string]string `yaml:"labels" json:"labels"`
-}
+
 type VolumeMount struct {
 	Name      string `yaml:"name" json:"name"`
 	MountPath string `yaml:"mountPath" json:"mountPath"`
@@ -48,7 +43,7 @@ type PodStatus struct {
 type Pod struct {
 	ApiVersion string      `yaml:"apiVersion" json:"apiVersion"`
 	Kind       string      `yaml:"kind" json:"kind"`
-	MetaData   PodMetaData `yaml:"metadata" json:"metadata"`
+	MetaData   MetaData `yaml:"metadata" json:"metadata"`
 	Spec       PodSpec     `yaml:"spec" json:"spec"`
 	Status     PodStatus   `yaml:"status" json:"status"`
 }
