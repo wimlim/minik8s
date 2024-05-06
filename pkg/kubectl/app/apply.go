@@ -49,7 +49,7 @@ func applyHandler(cmd *cobra.Command, args []string) {
 	case "Pod":
 		applyPod(content)
 	case "Service":
-		fmt.Println("apply service")
+		applyService(content)
 	}
 
 }
@@ -73,6 +73,35 @@ func applyPod(content []byte) {
 	//fmt.Println(string(jsonData))
 	if err != nil {
 		fmt.Println("marshal pod error")
+		return
+	}
+	response, err := http.Post(HttpUrl, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("post error")
+		return
+	}
+	defer response.Body.Close()
+
+}
+func applyService(content []byte) {
+	var service apiobj.Service
+	err := yaml.Unmarshal(content, &service)
+	if err != nil {
+		fmt.Println("unmarshal service error")
+		return
+	}
+	if service.MetaData.Namespace == "" {
+		service.MetaData.Namespace = "default"
+	}
+
+	URL := apiconfig.URL_Service
+	URL = strings.Replace(URL, ":namespace", service.MetaData.Namespace, -1)
+	URL = strings.Replace(URL, ":name", service.MetaData.Name, -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+	fmt.Println("Post " + HttpUrl)
+	jsonData, err := json.Marshal(service)
+	if err != nil {
+		fmt.Println("marshal service error")
 		return
 	}
 	response, err := http.Post(HttpUrl, "application/json", bytes.NewBuffer(jsonData))

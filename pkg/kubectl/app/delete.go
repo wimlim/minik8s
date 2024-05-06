@@ -45,8 +45,8 @@ func deleteHandler(cmd *cobra.Command, args []string) {
 	switch kind {
 	case "Pod":
 		deletePod(content)
-	case "service":
-		fmt.Println("delete service")
+	case "Service":
+		deleteService(content)
 	}
 }
 func deletePod(content []byte) {
@@ -78,4 +78,34 @@ func deletePod(content []byte) {
 	}
 	defer resp.Body.Close()
 	fmt.Println("delete pod success")
+}
+func deleteService(content []byte) {
+	var service apiobj.Service
+	err := yaml.Unmarshal(content, &service)
+	if err != nil {
+		fmt.Println("unmarshal service error")
+		return
+	}
+	URL := apiconfig.URL_Service
+	if service.MetaData.Namespace == "" {
+		service.MetaData.Namespace = "default"
+	}
+	URL = strings.Replace(URL, ":namespace", service.MetaData.Namespace, -1)
+	URL = strings.Replace(URL, ":name", service.MetaData.Name, -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+
+	fmt.Println("Delete " + HttpUrl)
+	request, err := http.NewRequest("DELETE", HttpUrl, nil)
+	if err != nil {
+		fmt.Println("new request error")
+		return
+	}
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		fmt.Println("do request error")
+		return
+	}
+	defer resp.Body.Close()
+	fmt.Println("delete service success")
 }

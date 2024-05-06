@@ -114,4 +114,19 @@ func GetPod(c *gin.Context) {
 
 func GetPodStatus(c *gin.Context) {
 	fmt.Println("getPodStatus")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s/status", namespace, name)
+	res, err := etcd.EtcdKV.Get(key)
+	var pod apiobj.Pod
+	json.Unmarshal([]byte(res), &pod)
+	
+	var status = pod.Status
+	statusJson, _ := json.Marshal(status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"data": string(statusJson),
+	})
 }

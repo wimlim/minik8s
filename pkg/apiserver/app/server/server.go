@@ -45,6 +45,13 @@ func (s *server) Bind() {
 	s.router.GET((apiconfig.URL_Pod), handler.GetPod)
 	s.router.GET((apiconfig.URL_PodStatus), handler.GetPodStatus)
 	//SERVICE
+	s.router.GET((apiconfig.URL_GlobalServices), handler.GetGlobalServices)
+	s.router.GET((apiconfig.URL_AllServices), handler.GetAllServices)
+	s.router.POST((apiconfig.URL_Service), handler.AddService)
+	s.router.DELETE((apiconfig.URL_Service), handler.DeleteService)
+	s.router.PUT((apiconfig.URL_Service), handler.UpdateService)
+	s.router.GET((apiconfig.URL_Service), handler.GetService)
+	s.router.GET((apiconfig.URL_ServiceStatus), handler.GetServiceStatus)
 
 	fmt.Println("server bind success")
 }

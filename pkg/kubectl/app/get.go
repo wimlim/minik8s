@@ -28,7 +28,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 	case "Pod":
 		getPod(args[1])
 	case "Service":
-		fmt.Println("get service")
+		getService(args[1])
 	}
 
 }
@@ -68,5 +68,54 @@ func getPod(arg string) {
 		return
 	}
 
-	fmt.Println(data)
+	podJson, err := json.MarshalIndent(pod, "", "    ")
+	if err != nil {
+		fmt.Println("marshal pod error")
+		return
+	}
+	fmt.Println(string(podJson))
+}
+
+func getService(arg string) {
+	namespace_service := strings.Split(arg, "/")
+	namespace_name := namespace_service[0]
+	service_name := namespace_service[1]
+
+	URL := apiconfig.URL_Service
+	URL = strings.Replace(URL, ":namespace", namespace_name, -1)
+	URL = strings.Replace(URL, ":name", service_name, -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+
+	fmt.Println("Get " + HttpUrl)
+
+	var service apiobj.Service
+
+	response, err := http.Get(HttpUrl)
+	if err != nil {
+		fmt.Println("get service error")
+		return
+	}
+	defer response.Body.Close()
+
+	var res map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&res)
+	if err != nil {
+		fmt.Println("decode service error")
+		return
+	}
+	data := res["data"].(string)
+
+	err = json.Unmarshal([]byte(data), &service)
+	if err != nil {
+		fmt.Println("unmarshal service error")
+		return
+	}
+
+	serviceJson, err := json.MarshalIndent(service, "", "    ")
+	if err != nil {
+		fmt.Println("marshal service error")
+		return
+	}
+
+	fmt.Println(string(serviceJson))
 }

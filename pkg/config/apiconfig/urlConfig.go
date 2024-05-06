@@ -13,6 +13,7 @@ const (
 	URL_Pod        = "/api/v1/namespaces/:namespace/pods/:name"
 	URL_PodStatus  = "/api/v1/namespaces/:namespace/pods/:name/status"
 
+	URL_GlobalServices = "/api/v1/services"
 	URL_AllServices   = "/api/v1/namespaces/:namespace/services"
 	URL_Service       = "/api/v1/namespaces/:namespace/services/:name"
 	URL_ServiceStatus = "/api/v1/namespaces/:namespace/services/:name/status"
