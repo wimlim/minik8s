@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
-	"net/http"
 	"minik8s/pkg/message"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	
 )
 
 func GetGlobalPods(c *gin.Context){
@@ -26,6 +28,16 @@ func GetGlobalPods(c *gin.Context){
 
 func GetAllPods(c *gin.Context){
 	fmt.Println("getAllPods")
+	namespace := c.Param("namespace")
+	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s", namespace)
+	var resList []string
+	resList ,err := etcd.EtcdKV.GetPrefix(key)
+	if(err != nil){
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"data": resList,
+	})
 
 }
 
@@ -72,16 +84,20 @@ func DeletePod(c *gin.Context){
 
 func UpdatePod(c *gin.Context){
 	fmt.Println("updatePod")
-	fmt.Println("addPod")
+	
+	var pod apiobj.Pod
+	c.ShouldBind(&pod)
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
-	value := []byte("pod")
-	err := etcd.EtcdKV.Put(key, value)
+
+	podJson,err := json.Marshal(pod)
 	if(err != nil){
 		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
 	}
-	c.JSON(http.StatusOK, gin.H{"update": "success"})
+
+	etcd.EtcdKV.Put(key, podJson)
+	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
 }
 
 func GetPod(c *gin.Context){
