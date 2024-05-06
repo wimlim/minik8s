@@ -8,75 +8,81 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetNodes(c *gin.Context){	
+func GetNodes(c *gin.Context) {
 	fmt.Println("getNodes")
+	key := etcd.PATH_EtcdNodes
+	res, err := etcd.EtcdKV.GetPrefix(key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
+	c.JSON(http.StatusOK, gin.H{"data": res})
 }
 
-func AddNode(c *gin.Context){	
+func AddNode(c *gin.Context) {
 	fmt.Println("addNode")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
-	value := []byte("node")
+	value := []byte(name)
 	err := etcd.EtcdKV.Put(key, value)
-	if(err != nil){
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{"add": "success"})
 }
 
-func DeleteNode(c *gin.Context){
+func DeleteNode(c *gin.Context) {
 	fmt.Println("deleteNode")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
 	err := etcd.EtcdKV.Delete(key)
-	if(err != nil){
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"delete": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{"delete": "success"})
 }
 
-func UpdateNode(c *gin.Context){
+func UpdateNode(c *gin.Context) {
 	fmt.Println("updateNode")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
 	value := []byte("node")
-	err := etcd.EtcdKV.Put(key, value)	
-	if(err != nil){
+	err := etcd.EtcdKV.Put(key, value)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
-	}	
+	}
 	c.JSON(http.StatusOK, gin.H{"update": "success"})
 }
 
-func GetNode(c *gin.Context){	
-	
+func GetNode(c *gin.Context) {
+
 	fmt.Print("getNode")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
-	res,err := etcd.EtcdKV.Get(key);
-	if(err != nil){
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
 
-func GetNodePods(c *gin.Context){
+func GetNodePods(c *gin.Context) {
 	fmt.Println("getNodePods")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/pods", name)
-	res ,err := etcd.EtcdKV.Get(key)
-	if(err != nil){
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
 
-func GetNodeStatus(c *gin.Context){	
+func GetNodeStatus(c *gin.Context) {
 	fmt.Println("getNodeStatus")
 	fmt.Println("getNodePods")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"%s/status", name)
-	res ,err := etcd.EtcdKV.Get(key)
-	if(err != nil){
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{"data": res})

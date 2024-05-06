@@ -6,18 +6,18 @@ import (
 
 type Publisher struct {
 	connct *amqp.Connection
-	url   string
+	url    string
 }
 
 func NewPublisher() *Publisher {
-	url := RabbitMQDefaultURL()
+	url := RabbitMQURL()
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		panic(err)
 	}
 	return &Publisher{
 		connct: conn,
-		url:   url,
+		url:    url,
 	}
 }
 
@@ -50,7 +50,7 @@ func (p *Publisher) Publish(routingKey string, msg []byte) error {
 		},
 	)
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil

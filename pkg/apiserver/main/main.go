@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"fmt"
 	"minik8s/pkg/apiserver/app/server"
 	"minik8s/pkg/config/apiconfig"
@@ -8,8 +8,8 @@ import(
 
 func main() {
 	fmt.Println("server start")
-	s := server.NewServer(apiconfig.ServerDefaultListenIp, 
-						apiconfig.ServerDefaultPort)
+	s := server.NewServer(apiconfig.ServerDefaultListenIp,
+		apiconfig.ServerDefaultPort)
 	s = server.SetServer(s)
 	s.Run()
 }
