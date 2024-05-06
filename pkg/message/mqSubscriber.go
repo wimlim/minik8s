@@ -2,12 +2,11 @@ package message
 
 import (
 	"github.com/streadway/amqp"
-
 )
 
 type Subscriber struct {
 	connct *amqp.Connection
-	url   string
+	url    string
 }
 
 func NewSubscriber() *Subscriber {
@@ -18,7 +17,7 @@ func NewSubscriber() *Subscriber {
 	}
 	return &Subscriber{
 		connct: conn,
-		url:   url,
+		url:    url,
 	}
 }
 func (s *Subscriber) Close() {
@@ -48,6 +47,6 @@ func (s *Subscriber) Subscribe(routingKey string, callback func(amqp.Delivery)) 
 
 	for d := range msgs {
 		callback(d)
-	}	
+	}
 	return nil
 }

@@ -3,23 +3,25 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"os"
-	"github.com/spf13/cobra"
 	"minik8s/pkg/apiobj"
-	"gopkg.in/yaml.v3"
 	"minik8s/pkg/config/apiconfig"
-	"strings"
 	"net/http"
+	"os"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var deleteCmd = &cobra.Command{
-	Use: "delete",
+	Use:   "delete",
 	Short: "Delete resources by filenames, stdin, resources and names",
-	Run: deleteHandler,
+	Run:   deleteHandler,
 }
-//kubectl delete pod.yaml
-func deleteHandler(cmd *cobra.Command, args []string){
-	if(len(args) == 0){
+
+// kubectl delete pod.yaml
+func deleteHandler(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
 		fmt.Println("no args")
 		return
 	}
@@ -41,13 +43,13 @@ func deleteHandler(cmd *cobra.Command, args []string){
 		return
 	}
 	switch kind {
-		case "Pod":
-			deletePod(content)
-		case "service":
-			fmt.Println("delete service")
+	case "Pod":
+		deletePod(content)
+	case "service":
+		fmt.Println("delete service")
 	}
 }
-func deletePod(content []byte){
+func deletePod(content []byte) {
 	var pod apiobj.Pod
 	err := yaml.Unmarshal(content, &pod)
 	if err != nil {
@@ -55,15 +57,15 @@ func deletePod(content []byte){
 		return
 	}
 	URL := apiconfig.URL_Pod
-	if(pod.MetaData.Namespace == ""){
+	if pod.MetaData.Namespace == "" {
 		pod.MetaData.Namespace = "default"
 	}
-	URL = strings.Replace(URL,":namespace",pod.MetaData.Namespace,-1)
-	URL = strings.Replace(URL,":name",pod.MetaData.Name,-1)
+	URL = strings.Replace(URL, ":namespace", pod.MetaData.Namespace, -1)
+	URL = strings.Replace(URL, ":name", pod.MetaData.Name, -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
 
 	fmt.Println("Delete " + HttpUrl)
-	request ,err := http.NewRequest("DELETE", HttpUrl, nil)
+	request, err := http.NewRequest("DELETE", HttpUrl, nil)
 	if err != nil {
 		fmt.Println("new request error")
 		return

@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/message"
+
 	"github.com/streadway/amqp"
 )
 
-func msgHandler(d amqp.Delivery){
+func msgHandler(d amqp.Delivery) {
 	fmt.Println(string(d.Body))
 	var msg message.Message
 	json.Unmarshal(d.Body, &msg)
@@ -27,7 +28,7 @@ func main() {
 	//This is a example
 	s := message.NewSubscriber()
 	defer s.Close()
-	for{
+	for {
 		s.Subscribe(message.ScheduleQueue, msgHandler)
 	}
 }

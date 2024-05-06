@@ -6,7 +6,7 @@ import (
 
 type Publisher struct {
 	connct *amqp.Connection
-	url   string
+	url    string
 }
 
 func NewPublisher() *Publisher {
@@ -17,7 +17,7 @@ func NewPublisher() *Publisher {
 	}
 	return &Publisher{
 		connct: conn,
-		url:   url,
+		url:    url,
 	}
 }
 
@@ -50,7 +50,7 @@ func (p *Publisher) Publish(routingKey string, msg []byte) error {
 		},
 	)
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil

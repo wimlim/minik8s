@@ -1,14 +1,17 @@
 package etcd
-import(
+
+import (
 	"time"
 )
-type EtcdConfig struct{
-	EtcdEndpoints []string
+
+type EtcdConfig struct {
+	EtcdEndpoints   []string
 	EtcdDialTimeout time.Duration
 }
-func EtcdDefaultConfig() *EtcdConfig{
+
+func EtcdDefaultConfig() *EtcdConfig {
 	return &EtcdConfig{
-		EtcdEndpoints: []string{"localhost:2379"},
-		EtcdDialTimeout:  5 * time.Second,
+		EtcdEndpoints:   []string{"localhost:2379"},
+		EtcdDialTimeout: 5 * time.Second,
 	}
 }
