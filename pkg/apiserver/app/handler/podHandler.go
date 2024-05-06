@@ -96,6 +96,17 @@ func UpdatePod(c *gin.Context) {
 
 	etcd.EtcdKV.Put(key, podJson)
 	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
+
+	msg := message.Message{
+		Type:    "Update",
+		URL:     key,
+		Name:    name,
+		Content: string(podJson),
+	}
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.PodQueue, msgJson)
 }
 
 func GetPod(c *gin.Context) {
