@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/config/apiconfig"
 	"minik8s/pkg/message"
@@ -13,6 +12,10 @@ import (
 
 	"github.com/streadway/amqp"
 )
+
+func GetAllNodes() ([]string, error) {
+	return getAllNodes()
+}
 
 func getAllNodes() ([]string, error) {
 	URL := apiconfig.URL_AllNodes
@@ -30,17 +33,28 @@ func getAllNodes() ([]string, error) {
 		return nil, fmt.Errorf("status code: %d", response.StatusCode)
 	}
 
-	body, err := io.ReadAll(response.Body)
+	var res map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&res)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		fmt.Println("decode pod error")
 		return nil, err
 	}
 
+	data, ok := res["data"].([]interface{})
+	if !ok {
+		fmt.Println("expected type []interface{} for field 'data', got something else")
+		return nil, fmt.Errorf("type assertion failed for 'data'")
+	}
+
+	// 将 interface{} 列表转换为字符串列表
 	var nodes []string
-	err = json.Unmarshal(body, &nodes)
-	if err != nil {
-		fmt.Println("Error unmarshaling JSON:", err)
-		return nil, err
+	for _, item := range data {
+		str, ok := item.(string)
+		if !ok {
+			fmt.Println("type assertion failed for an item in 'data'")
+			return nil, fmt.Errorf("type assertion failed for an item in 'data'")
+		}
+		nodes = append(nodes, str)
 	}
 
 	return nodes, nil
@@ -89,6 +103,7 @@ func Run() {
 	defer sub.Close()
 	sub.Subscribe(message.ScheduleQueue, func(d amqp.Delivery) {
 		var msg message.Message
+		fmt.Println("receive message")
 		err := json.Unmarshal(d.Body, &msg)
 		if err != nil {
 			fmt.Println("unmarshal message error")

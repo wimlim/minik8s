@@ -11,7 +11,7 @@ import (
 func GetNodes(c *gin.Context) {
 	fmt.Println("getNodes")
 	key := etcd.PATH_EtcdNodes
-	res, err := etcd.EtcdKV.Get(key)
+	res, err := etcd.EtcdKV.GetPrefix(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
@@ -22,7 +22,7 @@ func AddNode(c *gin.Context) {
 	fmt.Println("addNode")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"%s", name)
-	value := []byte("node")
+	value := []byte(name)
 	err := etcd.EtcdKV.Put(key, value)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
