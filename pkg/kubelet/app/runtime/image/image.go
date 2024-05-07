@@ -13,10 +13,10 @@ import (
 )
 
 /*
- * PullImage
- * 参数：容器镜像地址
- * 返回：本地镜像ID
- */
+	PullImage
+	参数：容器镜像地址
+	返回：本地镜像ID，error
+*/
 
 func PullImage(imageRef string) (string, error) {
 	ctx := context.Background()
@@ -36,6 +36,30 @@ func PullImage(imageRef string) (string, error) {
 		return "", errors.New("image count ")
 	}
 	return imageIds[0], nil
+}
+
+/*
+	RemoveImage
+	参数：容器镜像地址
+	返回：error
+*/
+
+func RemoveImage(imageRef string) error {
+	ctx := context.Background()
+	tmpClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer tmpClient.Close()
+	imageIds, err := findLocalImageIdByImageRef(imageRef)
+	if len(imageIds) != 1 {
+		return errors.New("image count ")
+	}
+	_, err = tmpClient.ImageRemove(ctx, imageIds[0], image.RemoveOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func findLocalImageIdByImageRef(imageRef string) ([]string, error) {

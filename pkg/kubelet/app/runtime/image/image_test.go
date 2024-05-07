@@ -20,3 +20,10 @@ func TestFindLocalImageIdByImageRef(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestRemoveImage(t *testing.T) {
+	err := RemoveImage("docker.io/library/alpine")
+	if err != nil {
+		t.Error(err)
+	}
+}
