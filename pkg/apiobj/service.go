@@ -1,9 +1,6 @@
 package apiobj
 
-type ServiceMetadata struct {
-	Name      string `yaml:"name" json:"name"`
-	Namespace string `yaml:"namespace" json:"namespace"`
-}
+
 type ServicePort struct {
 	Name       string `yaml:"name" json:"name"`
 	Protocol   string `yaml:"protocol" json:"protocol"`
@@ -21,7 +18,7 @@ type ServiceStatus struct {
 type Service struct {
 	ApiVersion string        `yaml:"apiVersion" json:"apiVersion"`
 	Kind       string        `yaml:"kind" json:"kind"`
-	MetaData   ServiceMetadata   `yaml:"metadata" json:"metadata"`
+	MetaData   MetaData   `yaml:"metadata" json:"metadata"`
 	Spec       ServiceSpec   `yaml:"spec" json:"spec"`
 	Status     ServiceStatus `yaml:"status" json:"status"`
 }
