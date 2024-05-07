@@ -1,3 +1,3 @@
-cd ../scheduler/main
+cd ../pkg/scheduler/main
 go build
 ./main
