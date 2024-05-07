@@ -100,6 +100,17 @@ func addPod(msg message.Message) {
 		return
 	}
 	defer response.Body.Close()
+
+	msg_pub := message.Message{
+		Type:    "Add",
+		URL:     URL,
+		Name:    pod.MetaData.Name,
+		Content: string(jsonData),
+	}
+	msgJson, _ := json.Marshal(msg_pub)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.PodQueue, msgJson)
 }
 
 func deletePod(msg message.Message) {
