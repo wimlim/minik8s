@@ -24,12 +24,6 @@ import (
 	is-task				Filters containers that are a "task" for a service. Boolean option (true or false)
 */
 
-const (
-	IMAGE_IN_FILTER = "ancestor"
-	NAME_IN_FILTER  = "name"
-	ID_IN_FILTER    = "id"
-)
-
 func TestCreateContainer(t *testing.T) {
 	config := minik8sTypes.ContainerConfig{
 		Image: "alpine",
@@ -56,7 +50,7 @@ func TestListAllContainer(t *testing.T) {
 
 func TestListContainerWithOption(t *testing.T) {
 	filterArgs := filters.NewArgs()
-	filterArgs.Add(IMAGE_IN_FILTER, "alpine")
+	filterArgs.Add(minik8sTypes.Container_Filter_Image, "alpine")
 	containers, err := ListContainerWithFilters(filterArgs)
 	if err != nil {
 		t.Error(err)
@@ -68,7 +62,7 @@ func TestListContainerWithOption(t *testing.T) {
 
 func TestStartContainer(t *testing.T) {
 	filterArgs := filters.NewArgs()
-	filterArgs.Add(IMAGE_IN_FILTER, "alpine")
+	filterArgs.Add(minik8sTypes.Container_Filter_Image, "alpine")
 	containers, err := ListContainerWithFilters(filterArgs)
 	if err != nil {
 		t.Error(err)
@@ -83,7 +77,7 @@ func TestStartContainer(t *testing.T) {
 
 func TestStopContainer(t *testing.T) {
 	filterArgs := filters.NewArgs()
-	filterArgs.Add(IMAGE_IN_FILTER, "alpine")
+	filterArgs.Add(minik8sTypes.Container_Filter_Image, "alpine")
 	containers, err := ListContainerWithFilters(filterArgs)
 	if err != nil {
 		t.Error(err)
@@ -98,7 +92,7 @@ func TestStopContainer(t *testing.T) {
 
 func TestRemoveContainer(t *testing.T) {
 	filterArgs := filters.NewArgs()
-	filterArgs.Add(IMAGE_IN_FILTER, "alpine")
+	filterArgs.Add(minik8sTypes.Container_Filter_Image, "alpine")
 	containers, err := ListContainerWithFilters(filterArgs)
 	if err != nil {
 		t.Error(err)

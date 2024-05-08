@@ -1,6 +1,5 @@
 package apiobj
 
-
 type VolumeMount struct {
 	Name      string `yaml:"name" json:"name"`
 	MountPath string `yaml:"mountPath" json:"mountPath"`
@@ -13,6 +12,8 @@ type ContainerPort struct {
 	ContainerPort int    `yaml:"containerPort" json:"containerPort"`
 	Name          string `yaml:"name" json:"name"`
 	Protocol      string `yaml:"protocol" json:"protocol"`
+	HostIP        string `yaml:"hostIp" json:"hostIp"`
+	HostPort      string `yaml:"hostPort" json:"hostPort"`
 }
 type Container struct {
 	Name         string            `yaml:"name" json:"name"`
@@ -41,9 +42,9 @@ type PodStatus struct {
 }
 
 type Pod struct {
-	ApiVersion string      `yaml:"apiVersion" json:"apiVersion"`
-	Kind       string      `yaml:"kind" json:"kind"`
-	MetaData   MetaData `yaml:"metadata" json:"metadata"`
-	Spec       PodSpec     `yaml:"spec" json:"spec"`
-	Status     PodStatus   `yaml:"status" json:"status"`
+	ApiVersion string    `yaml:"apiVersion" json:"apiVersion"`
+	Kind       string    `yaml:"kind" json:"kind"`
+	MetaData   MetaData  `yaml:"metadata" json:"metadata"`
+	Spec       PodSpec   `yaml:"spec" json:"spec"`
+	Status     PodStatus `yaml:"status" json:"status"`
 }

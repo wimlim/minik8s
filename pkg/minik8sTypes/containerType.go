@@ -31,3 +31,30 @@ type ContainerConfig struct {
 	//	name
 	Name string
 }
+
+/*
+	container	创建需要的const
+*/
+
+const (
+	Container_Filter_Image = "ancestor"
+	Container_Filter_Name  = "name"
+	Container_Filter_Id    = "id"
+)
+
+const (
+	Container_IpcMode_Shareable = "shareable"
+)
+
+const (
+	Container_Label_PodUid       = "_pod_uid"
+	Container_Label_PodName      = "_pod_name"
+	Container_Label_IfPause      = "_if_pause"
+	Container_Label_PodNamespace = "_pod_namespace"
+	Container_Label_IfPause_True = "_true"
+)
+
+const (
+	Container_Port_Localhost_IP = "127.0.0.1"
+	Container_Port_Protocol_TCP = "tcp"
+)

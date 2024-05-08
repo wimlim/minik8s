@@ -4,6 +4,6 @@
 
 package runtime
 
-func CreateAllCommonContainer(pod) (string, error) {
+func CreateAllCommonContainer() (string, error) {
 	return "", nil
 }
