@@ -16,7 +16,7 @@ import (
 	返回：ContainerId，error
 */
 
-func CreateContainer(containerConfig minik8sTypes.ContainerConfig) (string, error) {
+func CreateContainer(containerConfig *minik8sTypes.ContainerConfig) (string, error) {
 	ctx := context.Background()
 	tmpClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {

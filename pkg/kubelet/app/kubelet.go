@@ -3,9 +3,11 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/streadway/amqp"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/kubelet/app/runtime"
 	"minik8s/pkg/message"
+
+	"github.com/streadway/amqp"
 )
 
 func msgHandler(d amqp.Delivery) {
@@ -16,6 +18,7 @@ func msgHandler(d amqp.Delivery) {
 
 	var pod apiobj.Pod
 	json.Unmarshal([]byte(msg.Content), &pod)
+	runtime.CreatePauseContainer(&pod)
 	fmt.Println(pod.MetaData.Name)
 }
 

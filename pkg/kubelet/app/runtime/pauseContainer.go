@@ -6,10 +6,13 @@ package runtime
 
 import (
 	"errors"
+	"fmt"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/kubelet/app/runtime/container"
 	"minik8s/pkg/kubelet/app/runtime/image"
 	"minik8s/pkg/minik8sTypes"
 	"net"
+	"strconv"
 	"sync"
 
 	"github.com/docker/go-connections/nat"
@@ -30,13 +33,24 @@ const (
 func CreatePauseContainer(pod *apiobj.Pod) (string, error) {
 	_, err := image.PullImage(PauseContainerImageRef)
 	if err != nil {
+		fmt.Println("Error:", err)
 		return "", err
 	}
-	_, err = parsePauseContainerConfig(pod)
+	pauseContainerConfig, err := parsePauseContainerConfig(pod)
 	if err != nil {
+		fmt.Println("Error:", err)
 		return "", err
 	}
-
+	pauseId, err := container.CreateContainer(pauseContainerConfig)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	_, err = container.StartContainer(pauseId)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
 	return "", nil
 }
 
@@ -71,7 +85,7 @@ func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, 
 				p.HostPort = availablePort
 			}
 			pausePortSet[p.HostPort] = struct{}{}
-			bindingPortsKey, err := nat.NewPort(p.Protocol, string(p.ContainerPort))
+			bindingPortsKey, err := nat.NewPort(p.Protocol, strconv.Itoa(p.ContainerPort))
 			if err != nil {
 				return nil, err
 			}
@@ -96,6 +110,7 @@ func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, 
 		Volumes:      nil,
 		Env:          nil,
 		IpcMode:      minik8sTypes.Container_IpcMode_Shareable,
+		Name:         minik8sTypes.Container_Pause_Name_Base + pod.MetaData.UID,
 	}
 	return &pauseContainerConfig, nil
 }

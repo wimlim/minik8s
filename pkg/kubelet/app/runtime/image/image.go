@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -19,6 +20,16 @@ import (
 */
 
 func PullImage(imageRef string) (string, error) {
+	imageIds, err := findLocalImageIdByImageRef(imageRef)
+	if len(imageIds) == 1 {
+		fmt.Printf("ImageCount has already been pulled")
+		return imageIds[0], nil
+	} else if len(imageIds) > 1 {
+		for _, imageId := range imageIds {
+			fmt.Println(imageId + "\n")
+		}
+		return "", errors.New("image count")
+	}
 	ctx := context.Background()
 	tmpClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -31,9 +42,13 @@ func PullImage(imageRef string) (string, error) {
 	}
 	defer image.Close()
 	io.Copy(os.Stdout, image)
-	imageIds, err := findLocalImageIdByImageRef(imageRef)
+	imageIds, err = findLocalImageIdByImageRef(imageRef)
 	if len(imageIds) != 1 {
-		return "", errors.New("image count ")
+		fmt.Printf("ImageCount is: %d\n", len(imageIds))
+		for _, imageId := range imageIds {
+			fmt.Println(imageId + "\n")
+		}
+		return "", errors.New("image count")
 	}
 	return imageIds[0], nil
 }
@@ -85,6 +100,9 @@ func findLocalImageIdByImageRef(imageRef string) ([]string, error) {
 }
 
 func parseImageRef(imageRef string) string {
+	if !strings.HasPrefix(imageRef, "docker.io/") {
+		return imageRef
+	}
 	parts := strings.Split(imageRef, "/")
 	lastPart := parts[len(parts)-1]
 	return lastPart

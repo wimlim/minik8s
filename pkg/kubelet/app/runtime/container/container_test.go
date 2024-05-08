@@ -31,7 +31,7 @@ func TestCreateContainer(t *testing.T) {
 		Tty:   false,
 		Name:  "",
 	}
-	id, err := CreateContainer(config)
+	id, err := CreateContainer(&config)
 	if err != nil {
 		t.Error(err)
 	}
