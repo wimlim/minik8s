@@ -8,14 +8,14 @@ import "github.com/docker/go-connections/nat"
 
 type ContainerConfig struct {
 	// config
-	Image        string              `json:"image"`
-	Cmd          []string            `json:"cmd"`
-	Env          []string            `json:"env"`
-	Tty          bool                `json:"tty"`
-	Labels       map[string]string   `json:"labels"`
-	Entrypoint   []string            `json:"entrypoint"`
-	Volumes      map[string]struct{} `json:"volumes"`
-	ExposedPorts map[string]struct{} `json:"exposedPorts"`
+	Image        string                `json:"image"`
+	Cmd          []string              `json:"cmd"`
+	Env          []string              `json:"env"`
+	Tty          bool                  `json:"tty"`
+	Labels       map[string]string     `json:"labels"`
+	Entrypoint   []string              `json:"entrypoint"`
+	Volumes      map[string]struct{}   `json:"volumes"`
+	ExposedPorts map[nat.Port]struct{} `json:"exposedPorts"`
 
 	// host config
 	NetworkMode  string      `json:"networkMode"`
@@ -40,6 +40,7 @@ const (
 	Container_Filter_Image = "ancestor"
 	Container_Filter_Name  = "name"
 	Container_Filter_Id    = "id"
+	Container_Filter_Label = "label"
 )
 
 const (

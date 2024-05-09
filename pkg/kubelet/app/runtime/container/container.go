@@ -26,9 +26,14 @@ func CreateContainer(containerConfig *minik8sTypes.ContainerConfig) (string, err
 
 	result, err := tmpClient.ContainerCreate(ctx,
 		&container.Config{
-			Image: containerConfig.Image,
-			Cmd:   containerConfig.Cmd,
-			Tty:   containerConfig.Tty,
+			Image:        containerConfig.Image,
+			Cmd:          containerConfig.Cmd,
+			Env:          containerConfig.Env,
+			Tty:          containerConfig.Tty,
+			Labels:       containerConfig.Labels,
+			Entrypoint:   containerConfig.Entrypoint,
+			Volumes:      containerConfig.Volumes,
+			ExposedPorts: containerConfig.ExposedPorts,
 		},
 		&container.HostConfig{
 			NetworkMode:  container.NetworkMode(containerConfig.NetworkMode),
@@ -119,6 +124,21 @@ func StopContainer(containerId string) (string, error) {
 	return containerId, nil
 }
 
+func RestartContainer(containerId string) (string, error) {
+	ctx := context.Background()
+	tmpClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return "", err
+	}
+	defer tmpClient.Close()
+	err = tmpClient.ContainerRestart(ctx, containerId, container.StopOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return containerId, nil
+}
+
 func ListContainerWithFilters(filterArgs filters.Args) ([]types.Container, error) {
 	ctx := context.Background()
 	tmpClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -150,4 +170,18 @@ func ListAllContainer() ([]types.Container, error) {
 		return []types.Container{}, err
 	}
 	return contianers, nil
+}
+
+func InspectContainer(containerId string) (*types.ContainerJSON, error) {
+	ctx := context.Background()
+	tmpClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, err
+	}
+	defer tmpClient.Close()
+	ctnJSON, err := tmpClient.ContainerInspect(ctx, containerId)
+	if err != nil {
+		return nil, err
+	}
+	return &ctnJSON, nil
 }

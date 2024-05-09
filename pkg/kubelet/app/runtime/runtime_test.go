@@ -21,3 +21,15 @@ func TestFindAvailablePort(t *testing.T) {
 		fmt.Printf("%s\n", port)
 	}
 }
+
+// pauseContainerConfig, err := parsePauseContainerConfig(pod)
+// if err != nil {
+// 	fmt.Println("Error:", err)
+// 	return "", err
+// }
+// jsonData, err := json.MarshalIndent((*pauseContainerConfig), "", "    ")
+// if err != nil {
+// 	fmt.Println("Error:", err)
+// 	return "", err
+// }
+// fmt.Println("\nJSON:\n" + string(jsonData))

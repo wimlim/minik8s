@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -41,6 +42,9 @@ func CreatePauseContainer(pod *apiobj.Pod) (string, error) {
 		fmt.Println("Error:", err)
 		return "", err
 	}
+	for labelKey, labelVal := range pauseContainerConfig.Labels {
+		fmt.Println(labelKey + " = " + labelVal)
+	}
 	pauseId, err := container.CreateContainer(pauseContainerConfig)
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -51,7 +55,91 @@ func CreatePauseContainer(pod *apiobj.Pod) (string, error) {
 		fmt.Println("Error:", err)
 		return "", err
 	}
+	if pod.Status.PodIP == "" {
+		pauseJSON, err := container.InspectContainer(pauseId)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return "", err
+		}
+		pod.Status.PodIP = (*pauseJSON).NetworkSettings.DefaultNetworkSettings.IPAddress
+		fmt.Println("\nPodIP:" + pod.Status.PodIP)
+	}
 	return "", nil
+}
+
+func StartPauseContainer(pod *apiobj.Pod) (string, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_IfPause+"="+minik8sTypes.Container_Label_IfPause_True)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodUid+"="+pod.MetaData.UID)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodName+"="+pod.MetaData.Name)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodNamespace+"="+pod.MetaData.Namespace)
+	for labelKey, labelValue := range pod.MetaData.Labels {
+		filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
+	}
+	containers, err := container.ListContainerWithFilters(filterArgs)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	if len(containers) != 1 {
+		return "", errors.New("pause count error")
+	}
+	_, err = container.StartContainer(containers[0].ID)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	return containers[0].ID, nil
+}
+
+func StopPauseContainer(pod *apiobj.Pod) (string, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_IfPause+"="+minik8sTypes.Container_Label_IfPause_True)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodUid+"="+pod.MetaData.UID)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodName+"="+pod.MetaData.Name)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodNamespace+"="+pod.MetaData.Namespace)
+	for labelKey, labelValue := range pod.MetaData.Labels {
+		filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
+	}
+	containers, err := container.ListContainerWithFilters(filterArgs)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	if len(containers) != 1 {
+		return "", errors.New("pause count error")
+	}
+	_, err = container.StopContainer(containers[0].ID)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	return containers[0].ID, nil
+}
+
+func RestartPauseContainer(pod *apiobj.Pod) (string, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_IfPause+"="+minik8sTypes.Container_Label_IfPause_True)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodUid+"="+pod.MetaData.UID)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodName+"="+pod.MetaData.Name)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodNamespace+"="+pod.MetaData.Namespace)
+	for labelKey, labelValue := range pod.MetaData.Labels {
+		filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
+	}
+	containers, err := container.ListContainerWithFilters(filterArgs)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	if len(containers) != 1 {
+		return "", errors.New("pause count error")
+	}
+	_, err = container.RestartContainer(containers[0].ID)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	return containers[0].ID, nil
 }
 
 func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, error) {
@@ -67,7 +155,7 @@ func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, 
 
 	// Ports
 	pausePortSet := map[string]struct{}{}
-	pauseExposedPorts := map[string]struct{}{}
+	pauseExposedPorts := map[nat.Port]struct{}{}
 	pauseBindingPorts := nat.PortMap{}
 	for _, ctn := range pod.Spec.Containers {
 		for _, p := range ctn.Ports {
@@ -98,7 +186,7 @@ func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, 
 					HostPort: p.HostPort,
 				},
 			}
-			pauseExposedPorts[string(bindingPortsKey)] = struct{}{}
+			pauseExposedPorts[bindingPortsKey] = struct{}{}
 		}
 	}
 
@@ -123,6 +211,7 @@ func findAvailablePort(pausePortSet *map[string]struct{}) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		defer listener.Close()
 		address := listener.Addr().String()
 		_, port, err := net.SplitHostPort(address)
 		if err != nil {

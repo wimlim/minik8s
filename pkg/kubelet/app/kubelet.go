@@ -18,7 +18,7 @@ func msgHandler(d amqp.Delivery) {
 
 	var pod apiobj.Pod
 	json.Unmarshal([]byte(msg.Content), &pod)
-	runtime.CreatePauseContainer(&pod)
+	runtime.RestartPauseContainer(&pod)
 	fmt.Println(pod.MetaData.Name)
 }
 
