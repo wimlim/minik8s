@@ -113,9 +113,6 @@ func addPod(msg message.Message) {
 	p.Publish(message.PodQueue, msgJson)
 }
 
-func deletePod(msg message.Message) {
-}
-
 func Run() {
 	// subscribe to the schedule queue
 	sub := message.NewSubscriber()
@@ -128,13 +125,6 @@ func Run() {
 			fmt.Println("unmarshal message error")
 			return
 		}
-		switch msg.Type {
-		case "Add":
-			fmt.Println("schedule add")
-			addPod(msg)
-		case "Delete":
-			fmt.Println("schedule delete")
-			deletePod(msg)
-		}
+		addPod(msg)
 	})
 }
