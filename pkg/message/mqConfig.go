@@ -22,9 +22,11 @@ func RabbitMQURL() string {
 const (
 	ScheduleQueue = "scheduleQueue"
 	PodQueue      = "podQueue"
+	ServiceQueue  = "serviceQueue"
 )
 
 var Queue2Exchange = map[string]string{
 	ScheduleQueue: "minik8s",
 	PodQueue:      "minik8s",
+	ServiceQueue:  "minik8s",
 }
