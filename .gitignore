@@ -12,7 +12,8 @@ bin-release/
 *.air
 *.ipa
 *.apk
-main
+main/main
+!/main/
 main.exe
 
 # Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
