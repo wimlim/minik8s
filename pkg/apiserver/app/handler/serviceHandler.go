@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
+	"minik8s/pkg/message"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -65,6 +66,17 @@ func AddService(c *gin.Context) {
 
 	etcd.EtcdKV.Put(key, serviceJson)
 	c.JSON(http.StatusOK, gin.H{"add": string(serviceJson)})
+
+	msg := message.Message{
+		Type:    "Add",
+		URL:     key,
+		Name:    name,
+		Content: string(serviceJson),
+	}
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.ScheduleQueue, msgJson)
 }
 
 func UpdateService(c *gin.Context) {
@@ -82,6 +94,17 @@ func UpdateService(c *gin.Context) {
 
 	etcd.EtcdKV.Put(key, serviceJson)
 	c.JSON(http.StatusOK, gin.H{"update": string(serviceJson)})
+
+	msg := message.Message{
+		Type:    "Update",
+		URL:     key,
+		Name:    name,
+		Content: string(serviceJson),
+	}
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.ScheduleQueue, msgJson)
 }
 
 func DeleteService(c *gin.Context) {
@@ -94,6 +117,16 @@ func DeleteService(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"delete": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{"delete": "success"})
+
+	msg := message.Message{
+		Type: "Delete",
+		URL:  key,
+		Name: name,
+	}
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.ScheduleQueue, msgJson)
 }
 
 func GetServiceStatus(c *gin.Context) {
