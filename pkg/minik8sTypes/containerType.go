@@ -64,3 +64,9 @@ const (
 const (
 	Container_Pause_Name_Base = "pause-"
 )
+
+const (
+	Pause_Container_Ref       = "container:"
+	Pause_Container_Namebase  = "pause-"
+	Common_Container_Namebase = "common-"
+)
