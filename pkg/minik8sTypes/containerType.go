@@ -48,11 +48,12 @@ const (
 )
 
 const (
-	Container_Label_PodUid       = "_pod_uid"
-	Container_Label_PodName      = "_pod_name"
-	Container_Label_IfPause      = "_if_pause"
-	Container_Label_PodNamespace = "_pod_namespace"
-	Container_Label_IfPause_True = "_true"
+	Container_Label_PodUid        = "_pod_uid"
+	Container_Label_PodName       = "_pod_name"
+	Container_Label_IfPause       = "_if_pause"
+	Container_Label_PodNamespace  = "_pod_namespace"
+	Container_Label_IfPause_True  = "_true"
+	Container_Label_IfPause_False = "_false"
 )
 
 const (

@@ -10,7 +10,7 @@ func CreatePod(pod *apiobj.Pod) error {
 	if err != nil {
 		return err
 	}
-	_, err = CreateAllCommonContainer()
+	_, err = CreateAllCommonContainer(pod)
 	if err != nil {
 		return err
 	}

@@ -64,7 +64,35 @@ func CreatePauseContainer(pod *apiobj.Pod) (string, error) {
 		pod.Status.PodIP = (*pauseJSON).NetworkSettings.DefaultNetworkSettings.IPAddress
 		fmt.Println("\nPodIP:" + pod.Status.PodIP)
 	}
-	return "", nil
+	return pauseId, nil
+}
+
+func RemovePauseContainer(pod *apiobj.Pod) (string, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_IfPause+"="+minik8sTypes.Container_Label_IfPause_True)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodUid+"="+pod.MetaData.UID)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodName+"="+pod.MetaData.Name)
+	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodNamespace+"="+pod.MetaData.Namespace)
+	for labelKey, labelValue := range pod.MetaData.Labels {
+		filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
+	}
+	containers, err := container.ListContainerWithFilters(filterArgs)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	if len(containers) == 0 {
+		fmt.Println("Pause container has already been removed")
+		return "", nil
+	} else if len(containers) != 1 {
+		return "", errors.New("pause count error")
+	}
+	_, err = container.RemoveContainer(containers[0].ID)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+	return containers[0].ID, nil
 }
 
 func StartPauseContainer(pod *apiobj.Pod) (string, error) {

@@ -24,6 +24,7 @@ type Container struct {
 	Args         []string          `yaml:"args" json:"args"`
 	Resources    Resource          `yaml:"resources" json:"resources"`
 	VolumeMounts []VolumeMount     `yaml:"volumeMounts" json:"volumeMounts"`
+	Tty          bool              `yaml:"tty" json:"tty" default:"false"`
 }
 type Volume struct {
 	Name string `yaml:"name" json:"name"`
