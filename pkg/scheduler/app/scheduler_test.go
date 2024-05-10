@@ -1,11 +1,12 @@
 package scheduler
 
 import (
+	"minik8s/pkg/apirequest"
 	"testing"
 )
 
 func TestGetAllNodes(t *testing.T) {
-	nodes, err := getAllNodes()
+	nodes, err := apirequest.GetAllNodes()
 	if err != nil {
 		t.Error(err)
 	}

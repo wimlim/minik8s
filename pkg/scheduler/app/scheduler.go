@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/apiconfig"
 	"minik8s/pkg/message"
 	"net/http"
@@ -13,55 +14,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func GetAllNodes() ([]string, error) {
-	return getAllNodes()
-}
-
-func getAllNodes() ([]string, error) {
-	URL := apiconfig.URL_AllNodes
-	HttpURL := apiconfig.GetApiServerUrl() + URL
-
-	response, err := http.Get(HttpURL)
-	if err != nil {
-		fmt.Println("HTTP request error:", err)
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		fmt.Println("HTTP request returned status code:", response.StatusCode)
-		return nil, fmt.Errorf("status code: %d", response.StatusCode)
-	}
-
-	var res map[string]interface{}
-	err = json.NewDecoder(response.Body).Decode(&res)
-	if err != nil {
-		fmt.Println("decode pod error")
-		return nil, err
-	}
-
-	data, ok := res["data"].([]interface{})
-	if !ok {
-		fmt.Println("expected type []interface{} for field 'data', got something else")
-		return nil, fmt.Errorf("type assertion failed for 'data'")
-	}
-
-	// 将 interface{} 列表转换为字符串列表
-	var nodes []string
-	for _, item := range data {
-		str, ok := item.(string)
-		if !ok {
-			fmt.Println("type assertion failed for an item in 'data'")
-			return nil, fmt.Errorf("type assertion failed for an item in 'data'")
-		}
-		nodes = append(nodes, str)
-	}
-
-	return nodes, nil
-}
-
 func chooseNode() string {
-	nodes, err := getAllNodes()
+	nodes, err := apirequest.GetAllNodes()
 	if err != nil {
 		fmt.Println("Error getting nodes:", err)
 		return ""
