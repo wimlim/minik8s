@@ -24,4 +24,6 @@ spec:
       mountPath: /html
   volumes:
   - name: html
+    hosrPath:
+      path: /home/share
 
