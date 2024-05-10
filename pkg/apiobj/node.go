@@ -13,3 +13,9 @@ func (n *Node) GetKind() string {
 func (n *Node) GetName() string {
 	return n.MetaData.Name
 }
+func (n *Node) GetNamespace() string {
+	return n.MetaData.Namespace
+}
+func (n *Node) SetNamespace(namespace string) {
+	n.MetaData.Namespace = namespace
+}

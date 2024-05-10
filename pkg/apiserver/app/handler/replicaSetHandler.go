@@ -6,6 +6,7 @@ import (
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
 	"net/http"
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 )
@@ -43,6 +44,8 @@ func AddReplicaSet(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdReplicas+"/%s/%s", namespace, name)
+
+	replicaSet.MetaData.UID = uuid.New().String()
 
 	replicaSetJson, err := json.Marshal(replicaSet)
 	if err != nil {
@@ -91,7 +94,7 @@ func GetReplicaSet(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"data": res,
+		"data": string(res),
 	})
 }
 
@@ -105,6 +108,6 @@ func GetReplicaSetStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"data": res,
+		"data": string(res),
 	})
 }

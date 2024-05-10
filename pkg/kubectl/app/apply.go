@@ -48,6 +48,8 @@ func applyHandler(cmd *cobra.Command, args []string) {
 
 	var apiObject apiobj.ApiObject
 	switch kind {
+	case "Node":
+		apiObject = &apiobj.Node{}
 	case "Pod":
 		apiObject = &apiobj.Pod{}
 	case "Service":
@@ -66,16 +68,20 @@ func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
 		return
 	}
 	if apiObject.GetNamespace() == "" {
-		apiObject.SetNamespace("default")
+		if apiObject.GetKind() != "Node" {
+			apiObject.SetNamespace("default")
+		}
 	}
 
 	URL := apiconfig.Kind2URL[apiObject.GetKind()]
-	URL = strings.Replace(URL, ":namespace", apiObject.GetNamespace(), -1)
+	if apiObject.GetKind() != "Node" {
+		URL = strings.Replace(URL, ":namespace", apiObject.GetNamespace(), -1)
+	}
 	URL = strings.Replace(URL, ":name", apiObject.GetName(), -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
 	fmt.Println("Post " + HttpUrl)
 	jsonData, err := json.Marshal(apiObject)
-	//fmt.Println(string(jsonData))
+	// fmt.Println(string(jsonData))
 	if err != nil {
 		fmt.Printf("marshal %s error\n", apiObject.GetKind())
 		return
@@ -88,4 +94,3 @@ func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
 	defer response.Body.Close()
 	fmt.Printf("apply %s request sent\n", apiObject.GetKind())
 }
-
