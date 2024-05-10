@@ -24,32 +24,34 @@ func getHandler(cmd *cobra.Command, args []string) {
 	}
 	kind := args[0]
 
+	var apiObject apiobj.ApiObject
 	switch kind {
 	case "Pod":
-		getPod(args[1])
+		apiObject = &apiobj.Pod{}
 	case "Service":
-		getService(args[1])
+		apiObject = &apiobj.Service{}
+	case "ReplicaSet":
+		apiObject = &apiobj.ReplicaSet{}
 	}
 
+	getApiObject(args[1], apiObject)
 }
 
-func getPod(arg string) {
-	namespace_pod := strings.Split(arg, "/")
-	namespace_name := namespace_pod[0]
-	pod_name := namespace_pod[1]
+func getApiObject(arg string, apiObject apiobj.ApiObject) {
+	namespace_obj := strings.Split(arg, "/")
+	namespace_name := namespace_obj[0]
+	obj_name := namespace_obj[1]
 
-	URL := apiconfig.URL_Pod
+	URL := apiconfig.Kind2URL[apiObject.GetKind()]
 	URL = strings.Replace(URL, ":namespace", namespace_name, -1)
-	URL = strings.Replace(URL, ":name", pod_name, -1)
+	URL = strings.Replace(URL, ":name", obj_name, -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
 
 	fmt.Println("Get " + HttpUrl)
 
-	var pod apiobj.Pod
-
 	response, err := http.Get(HttpUrl)
 	if err != nil {
-		fmt.Println("get pod error")
+		fmt.Printf("get %s error",apiObject.GetKind())
 		return
 	}
 	defer response.Body.Close()
@@ -57,65 +59,21 @@ func getPod(arg string) {
 	var res map[string]interface{}
 	err = json.NewDecoder(response.Body).Decode(&res)
 	if err != nil {
-		fmt.Println("decode pod error")
+		fmt.Printf("decode %s error\n", apiObject.GetKind())
 		return
 	}
 	data := res["data"].(string)
 
-	err = json.Unmarshal([]byte(data), &pod)
+	err = json.Unmarshal([]byte(data), apiObject)
 	if err != nil {
-		fmt.Println("unmarshal pod error")
+		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())
 		return
 	}
 
-	podJson, err := json.MarshalIndent(pod, "", "    ")
+	podJson, err := json.MarshalIndent(apiObject, "", "    ")
 	if err != nil {
-		fmt.Println("marshal pod error")
+		fmt.Printf("marshal %s error\n", apiObject.GetKind())
 		return
 	}
 	fmt.Println(string(podJson))
-}
-
-func getService(arg string) {
-	namespace_service := strings.Split(arg, "/")
-	namespace_name := namespace_service[0]
-	service_name := namespace_service[1]
-
-	URL := apiconfig.URL_Service
-	URL = strings.Replace(URL, ":namespace", namespace_name, -1)
-	URL = strings.Replace(URL, ":name", service_name, -1)
-	HttpUrl := apiconfig.GetApiServerUrl() + URL
-
-	fmt.Println("Get " + HttpUrl)
-
-	var service apiobj.Service
-
-	response, err := http.Get(HttpUrl)
-	if err != nil {
-		fmt.Println("get service error")
-		return
-	}
-	defer response.Body.Close()
-
-	var res map[string]interface{}
-	err = json.NewDecoder(response.Body).Decode(&res)
-	if err != nil {
-		fmt.Println("decode service error")
-		return
-	}
-	data := res["data"].(string)
-
-	err = json.Unmarshal([]byte(data), &service)
-	if err != nil {
-		fmt.Println("unmarshal service error")
-		return
-	}
-
-	serviceJson, err := json.MarshalIndent(service, "", "    ")
-	if err != nil {
-		fmt.Println("marshal service error")
-		return
-	}
-
-	fmt.Println(string(serviceJson))
 }

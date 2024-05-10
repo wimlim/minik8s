@@ -17,4 +17,17 @@ const (
 	URL_AllServices   = "/api/v1/namespaces/:namespace/services"
 	URL_Service       = "/api/v1/namespaces/:namespace/services/:name"
 	URL_ServiceStatus = "/api/v1/namespaces/:namespace/services/:name/status"
+
+	URL_GlobalReplicaSets = "/api/v1/replicasets"
+	URL_AllReplicaSets    = "/api/v1/namespaces/:namespace/replicasets"
+	URL_ReplicaSet        = "/api/v1/namespaces/:namespace/replicasets/:name"
+	URL_ReplicaSetStatus  = "/api/v1/namespaces/:namespace/replicasets/:name/status"
 )
+
+var Kind2URL = map[string]string{
+	"Node":       URL_Node,
+	"Pod":        URL_Pod,
+	"Service":    URL_Service,
+	"ReplicaSet": URL_ReplicaSet,
+}
+	
