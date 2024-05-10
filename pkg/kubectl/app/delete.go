@@ -42,26 +42,31 @@ func deleteHandler(cmd *cobra.Command, args []string) {
 		fmt.Println("parse api obj error")
 		return
 	}
+
+	var apiObject apiobj.ApiObject
 	switch kind {
 	case "Pod":
-		deletePod(content)
+		apiObject = &apiobj.Pod{}
 	case "Service":
-		deleteService(content)
+		apiObject = &apiobj.Service{}
+	case "ReplicaSet":
+		apiObject = &apiobj.ReplicaSet{}
 	}
+
+	deleteApiObject(content, apiObject)
 }
-func deletePod(content []byte) {
-	var pod apiobj.Pod
-	err := yaml.Unmarshal(content, &pod)
+func deleteApiObject(content []byte, apiObject apiobj.ApiObject) {
+	err := yaml.Unmarshal(content, apiObject)
 	if err != nil {
-		fmt.Println("unmarshal pod error")
+		fmt.Printf("unmarshal %s error\n",apiObject.GetKind())
 		return
 	}
-	URL := apiconfig.URL_Pod
-	if pod.MetaData.Namespace == "" {
-		pod.MetaData.Namespace = "default"
+	if apiObject.GetNamespace() == "" {
+		apiObject.SetNamespace("default")
 	}
-	URL = strings.Replace(URL, ":namespace", pod.MetaData.Namespace, -1)
-	URL = strings.Replace(URL, ":name", pod.MetaData.Name, -1)
+	URL := apiconfig.Kind2URL[apiObject.GetKind()]
+	URL = strings.Replace(URL, ":namespace", apiObject.GetNamespace(), -1)
+	URL = strings.Replace(URL, ":name", apiObject.GetName(), -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
 
 	fmt.Println("Delete " + HttpUrl)
@@ -77,35 +82,5 @@ func deletePod(content []byte) {
 		return
 	}
 	defer resp.Body.Close()
-	fmt.Println("delete pod success")
-}
-func deleteService(content []byte) {
-	var service apiobj.Service
-	err := yaml.Unmarshal(content, &service)
-	if err != nil {
-		fmt.Println("unmarshal service error")
-		return
-	}
-	URL := apiconfig.URL_Service
-	if service.MetaData.Namespace == "" {
-		service.MetaData.Namespace = "default"
-	}
-	URL = strings.Replace(URL, ":namespace", service.MetaData.Namespace, -1)
-	URL = strings.Replace(URL, ":name", service.MetaData.Name, -1)
-	HttpUrl := apiconfig.GetApiServerUrl() + URL
-
-	fmt.Println("Delete " + HttpUrl)
-	request, err := http.NewRequest("DELETE", HttpUrl, nil)
-	if err != nil {
-		fmt.Println("new request error")
-		return
-	}
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		fmt.Println("do request error")
-		return
-	}
-	defer resp.Body.Close()
-	fmt.Println("delete service success")
+	fmt.Printf("delete %s request sent\n", apiObject.GetKind())
 }

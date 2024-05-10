@@ -62,14 +62,14 @@ func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
 
 	err := yaml.Unmarshal(content, apiObject)
 	if err != nil {
-		fmt.Printf("unmarshal %s error", apiObject.GetKind())
+		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())
 		return
 	}
 	if apiObject.GetNamespace() == "" {
 		apiObject.SetNamespace("default")
 	}
 
-	URL := apiconfig.URL_Pod
+	URL := apiconfig.Kind2URL[apiObject.GetKind()]
 	URL = strings.Replace(URL, ":namespace", apiObject.GetNamespace(), -1)
 	URL = strings.Replace(URL, ":name", apiObject.GetName(), -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
@@ -77,7 +77,7 @@ func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
 	jsonData, err := json.Marshal(apiObject)
 	//fmt.Println(string(jsonData))
 	if err != nil {
-		fmt.Printf("marshal %s error", apiObject.GetKind())
+		fmt.Printf("marshal %s error\n", apiObject.GetKind())
 		return
 	}
 	response, err := http.Post(HttpUrl, "application/json", bytes.NewBuffer(jsonData))
@@ -86,6 +86,6 @@ func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
 		return
 	}
 	defer response.Body.Close()
-
+	fmt.Printf("apply %s request sent\n", apiObject.GetKind())
 }
 
