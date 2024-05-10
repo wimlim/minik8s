@@ -6,3 +6,10 @@ type node struct {
 	MetaData   MetaData `yaml:"metadata" json:"metadata"`
 	IP         string   `yaml:"ip" json:"ip"`
 }
+
+func (n *node) GetKind() string {
+	return n.Kind
+}
+func (n *node) GetName() string {
+	return n.MetaData.Name
+}

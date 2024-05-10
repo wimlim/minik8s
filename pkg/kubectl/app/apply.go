@@ -45,34 +45,39 @@ func applyHandler(cmd *cobra.Command, args []string) {
 		fmt.Println("parse api obj error")
 		return
 	}
+
+	var apiObject apiobj.ApiObject
 	switch kind {
 	case "Pod":
-		applyPod(content)
+		apiObject = &apiobj.Pod{}
 	case "Service":
-		applyService(content)
+		apiObject = &apiobj.Service{}
+	case "ReplicaSet":
+		apiObject = &apiobj.ReplicaSet{}
 	}
 
+	applyApiObject(content, apiObject)
 }
-func applyPod(content []byte) {
-	var pod apiobj.Pod
-	err := yaml.Unmarshal(content, &pod)
+func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
+
+	err := yaml.Unmarshal(content, apiObject)
 	if err != nil {
-		fmt.Println("unmarshal pod error")
+		fmt.Printf("unmarshal %s error", apiObject.GetKind())
 		return
 	}
-	if pod.MetaData.Namespace == "" {
-		pod.MetaData.Namespace = "default"
+	if apiObject.GetNamespace() == "" {
+		apiObject.SetNamespace("default")
 	}
 
 	URL := apiconfig.URL_Pod
-	URL = strings.Replace(URL, ":namespace", pod.MetaData.Namespace, -1)
-	URL = strings.Replace(URL, ":name", pod.MetaData.Name, -1)
+	URL = strings.Replace(URL, ":namespace", apiObject.GetNamespace(), -1)
+	URL = strings.Replace(URL, ":name", apiObject.GetName(), -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
 	fmt.Println("Post " + HttpUrl)
-	jsonData, err := json.Marshal(pod)
+	jsonData, err := json.Marshal(apiObject)
 	//fmt.Println(string(jsonData))
 	if err != nil {
-		fmt.Println("marshal pod error")
+		fmt.Printf("marshal %s error", apiObject.GetKind())
 		return
 	}
 	response, err := http.Post(HttpUrl, "application/json", bytes.NewBuffer(jsonData))
@@ -83,32 +88,4 @@ func applyPod(content []byte) {
 	defer response.Body.Close()
 
 }
-func applyService(content []byte) {
-	var service apiobj.Service
-	err := yaml.Unmarshal(content, &service)
-	if err != nil {
-		fmt.Println("unmarshal service error")
-		return
-	}
-	if service.MetaData.Namespace == "" {
-		service.MetaData.Namespace = "default"
-	}
 
-	URL := apiconfig.URL_Service
-	URL = strings.Replace(URL, ":namespace", service.MetaData.Namespace, -1)
-	URL = strings.Replace(URL, ":name", service.MetaData.Name, -1)
-	HttpUrl := apiconfig.GetApiServerUrl() + URL
-	fmt.Println("Post " + HttpUrl)
-	jsonData, err := json.Marshal(service)
-	if err != nil {
-		fmt.Println("marshal service error")
-		return
-	}
-	response, err := http.Post(HttpUrl, "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Println("post error")
-		return
-	}
-	defer response.Body.Close()
-
-}

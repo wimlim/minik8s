@@ -70,3 +70,16 @@ type Pod struct {
 	Spec       PodSpec   `yaml:"spec" json:"spec"`
 	Status     PodStatus `yaml:"status" json:"status"`
 }
+
+func (p *Pod) GetKind() string {
+	return p.Kind
+}
+func (p *Pod) GetName() string {
+	return p.MetaData.Name
+}
+func (p *Pod) GetNamespace() string {
+	return p.MetaData.Namespace
+}
+func (p *Pod) SetNamespace(namespace string) {
+	p.MetaData.Namespace = namespace
+}

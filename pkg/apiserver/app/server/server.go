@@ -52,6 +52,14 @@ func (s *server) Bind() {
 	s.router.PUT((apiconfig.URL_Service), handler.UpdateService)
 	s.router.GET((apiconfig.URL_Service), handler.GetService)
 	s.router.GET((apiconfig.URL_ServiceStatus), handler.GetServiceStatus)
+	//REPLICASET
+	s.router.GET((apiconfig.URL_GlobalReplicaSets), handler.GetGlobalReplicaSets)
+	s.router.GET((apiconfig.URL_AllReplicaSets), handler.GetAllReplicaSets)
+	s.router.POST((apiconfig.URL_ReplicaSet), handler.AddReplicaSet)
+	s.router.DELETE((apiconfig.URL_ReplicaSet), handler.DeleteReplicaSet)
+	s.router.PUT((apiconfig.URL_ReplicaSet), handler.UpdateReplicaSet)
+	s.router.GET((apiconfig.URL_ReplicaSet), handler.GetReplicaSet)
+	s.router.GET((apiconfig.URL_ReplicaSetStatus), handler.GetReplicaSetStatus)
 
 	fmt.Println("server bind success")
 }
