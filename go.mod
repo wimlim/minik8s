@@ -8,6 +8,7 @@ require (
 	github.com/docker/docker v26.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/google/uuid v1.6.0
 	github.com/moby/ipvs v1.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/streadway/amqp v1.1.0

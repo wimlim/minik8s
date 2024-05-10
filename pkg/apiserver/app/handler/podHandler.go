@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func GetGlobalPods(c *gin.Context) {
@@ -47,6 +48,7 @@ func AddPod(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
+	pod.MetaData.UID = uuid.New().String()
 
 	podJson, err := json.Marshal(pod)
 	if err != nil {
@@ -121,7 +123,7 @@ func GetPodStatus(c *gin.Context) {
 	res, err := etcd.EtcdKV.Get(key)
 	var pod apiobj.Pod
 	json.Unmarshal([]byte(res), &pod)
-	
+
 	var status = pod.Status
 	statusJson, _ := json.Marshal(status)
 	if err != nil {
