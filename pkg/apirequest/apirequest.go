@@ -6,10 +6,12 @@ import (
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/config/apiconfig"
 	"net/http"
+	"strings"
 )
 
 func GetAllPods() ([]apiobj.Pod, error) {
 	URL := apiconfig.URL_AllPods
+	URL = strings.Replace(URL, ":namespace", "default", -1)
 	HttpURL := apiconfig.GetApiServerUrl() + URL
 
 	response, err := http.Get(HttpURL)
@@ -24,7 +26,7 @@ func GetAllPods() ([]apiobj.Pod, error) {
 		return nil, fmt.Errorf("status code: %d", response.StatusCode)
 	}
 
-	var res map[apiobj.Pod]interface{}
+	var res map[string]interface{}
 	err = json.NewDecoder(response.Body).Decode(&res)
 	if err != nil {
 		fmt.Println("decode pod error")
@@ -39,11 +41,13 @@ func GetAllPods() ([]apiobj.Pod, error) {
 
 	var pods []apiobj.Pod
 	for _, item := range data {
-		pod, ok := item.(apiobj.Pod)
+		podStr, ok := item.(string)
 		if !ok {
 			fmt.Println("type assertion failed for an item in 'data'")
 			return nil, fmt.Errorf("type assertion failed for an item in 'data'")
 		}
+		var pod apiobj.Pod
+		json.Unmarshal([]byte(podStr), &pod)
 		pods = append(pods, pod)
 	}
 	return pods, nil
