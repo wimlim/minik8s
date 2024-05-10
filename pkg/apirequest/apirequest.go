@@ -53,7 +53,7 @@ func GetAllPods() ([]apiobj.Pod, error) {
 	return pods, nil
 }
 
-func GetAllNodes() ([]string, error) {
+func GetAllNodes() ([]apiobj.Node, error) {
 	URL := apiconfig.URL_AllNodes
 	HttpURL := apiconfig.GetApiServerUrl() + URL
 
@@ -83,14 +83,16 @@ func GetAllNodes() ([]string, error) {
 	}
 
 	// 将 interface{} 列表转换为字符串列表
-	var nodes []string
+	var nodes []apiobj.Node
 	for _, item := range data {
 		str, ok := item.(string)
 		if !ok {
 			fmt.Println("type assertion failed for an item in 'data'")
 			return nil, fmt.Errorf("type assertion failed for an item in 'data'")
 		}
-		nodes = append(nodes, str)
+		var node apiobj.Node
+		json.Unmarshal([]byte(str), &node)
+		nodes = append(nodes, node)
 	}
 
 	return nodes, nil

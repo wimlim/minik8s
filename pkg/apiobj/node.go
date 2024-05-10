@@ -1,15 +1,15 @@
 package apiobj
 
-type node struct {
+type Node struct {
 	ApiVersion string   `yaml:"apiVersion" json:"apiVersion"`
 	Kind       string   `yaml:"kind" json:"kind"`
 	MetaData   MetaData `yaml:"metadata" json:"metadata"`
 	IP         string   `yaml:"ip" json:"ip"`
 }
 
-func (n *node) GetKind() string {
+func (n *Node) GetKind() string {
 	return n.Kind
 }
-func (n *node) GetName() string {
+func (n *Node) GetName() string {
 	return n.MetaData.Name
 }
