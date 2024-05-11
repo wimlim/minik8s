@@ -47,6 +47,8 @@ func describeHandler(cmd *cobra.Command, args []string) {
 
 	var apiObject apiobj.ApiObject
 	switch kind {
+	case "Node":
+		apiObject = &apiobj.Node{}
 	case "Pod":
 		apiObject = &apiobj.Pod{}
 	case "Service":
@@ -62,16 +64,21 @@ func describeHandler(cmd *cobra.Command, args []string) {
 func describeApiObject(content []byte, apiObject apiobj.ApiObject) {
 
 	err := yaml.Unmarshal(content, apiObject)
+	// fmt.Println(string(content))
 	if err != nil {
 		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())
 		return
 	}
 	if apiObject.GetNamespace() == "" {
-		apiObject.SetNamespace("default")
+		if apiObject.GetKind() != "Node" {
+			apiObject.SetNamespace("default")
+		}
 	}
 
 	URL := apiconfig.Kind2URL[apiObject.GetKind()]
-	URL = strings.Replace(URL, ":namespace", apiObject.GetNamespace(), -1)
+	if apiObject.GetKind() != "Node" {
+		URL = strings.Replace(URL, ":namespace", apiObject.GetNamespace(), -1)
+	}
 	URL = strings.Replace(URL, ":name", apiObject.GetName(), -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
 
@@ -91,7 +98,7 @@ func describeApiObject(content []byte, apiObject apiobj.ApiObject) {
 		return
 	}
 	data := res["data"].(string)
-
+	// fmt.Println(data)
 	err = json.Unmarshal([]byte(data), apiObject)
 	if err != nil {
 		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())

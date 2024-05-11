@@ -1,30 +1,30 @@
 package apiobj
 
 type ReplicaSetSelector struct {
-	MatchLabels map[string]string `json:"matchLabels"`
+	MatchLabels map[string]string `yaml:"matchLabels" json:"matchLabels"`
 }
 type PodTemplateSpec struct {
-	MetaData MetaData `json:"metadata"`
-	Spec     PodSpec  `json:"spec"`
+	MetaData MetaData `yaml:"metadata" json:"metadata"`
+	Spec     PodSpec  `yaml:"spec" json:"spec"`
 }
 
 type ReplicaSetSpec struct {
-	Replicas int                `json:"replicas"`
-	Selector ReplicaSetSelector `json:"selector"`
-	Template PodTemplateSpec    `json:"template"`
+	Replicas int                `yaml:"replicas" json:"replicas"`
+	Selector ReplicaSetSelector `yaml:"selector" json:"selector"`
+	Template PodTemplateSpec    `yaml:"template" json:"template"`
 }
 
 type ReplicaSetStatus struct {
-	SpecReplicas  int `json:"specReplicas"`
-	ReadyReplicas int `json:"readyReplicas"`
+	SpecReplicas  int `yaml:"specReplicas" json:"specReplicas"`
+	ReadyReplicas int `yaml:"readyReplicas" json:"readyReplicas"`
 }
 
 type ReplicaSet struct {
-	ApiVersion string           `json:"apiVersion"`
-	Kind       string           `json:"kind"`
-	MetaData   MetaData         `json:"metadata"`
-	Spec       ReplicaSetSpec   `json:"spec"`
-	Status     ReplicaSetStatus `json:"status"`
+	ApiVersion string           `yaml:"apiVersion" json:"apiVersion"`
+	Kind       string           `yaml:"kind" json:"kind"`
+	MetaData   MetaData         `yaml:"metadata" json:"metadata"`
+	Spec       ReplicaSetSpec   `yaml:"spec" json:"spec"`
+	Status     ReplicaSetStatus `yaml:"status" json:"status"`
 }
 
 func (r *ReplicaSet) GetKind() string {

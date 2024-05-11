@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/apiconfig"
 	"net/http"
 	"strings"
@@ -23,6 +24,29 @@ func getHandler(cmd *cobra.Command, args []string) {
 		return
 	}
 	kind := args[0]
+
+	if kind == "pods" {
+		pods, err := apirequest.GetAllPods()
+		if err != nil {
+			fmt.Println("Error getting pods:", err)
+		}
+		for _, pod := range pods {
+			jsonData, _ := json.MarshalIndent(pod, "", "    ")
+			fmt.Println(string(jsonData))
+		}
+		return
+	}
+	if kind == "nodes" {
+		nodes, err := apirequest.GetAllNodes()
+		if err != nil {
+			fmt.Println("Error getting nodes:", err)
+		}
+		for _, node := range nodes {
+			jsonData, _ := json.MarshalIndent(node, "", "    ")
+			fmt.Println(string(jsonData))
+		}
+		return
+	}
 
 	var apiObject apiobj.ApiObject
 	switch kind {
@@ -51,7 +75,7 @@ func getApiObject(arg string, apiObject apiobj.ApiObject) {
 
 	response, err := http.Get(HttpUrl)
 	if err != nil {
-		fmt.Printf("get %s error",apiObject.GetKind())
+		fmt.Printf("get %s error", apiObject.GetKind())
 		return
 	}
 	defer response.Body.Close()

@@ -14,11 +14,10 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func chooseNode() string {
+func chooseNode() apiobj.Node {
 	nodes, err := apirequest.GetAllNodes()
 	if err != nil {
 		fmt.Println("Error getting nodes:", err)
-		return ""
 	}
 	return nodes[0]
 }
@@ -28,7 +27,7 @@ func addPod(msg message.Message) {
 	json.Unmarshal([]byte(msg.Content), &pod)
 
 	node := chooseNode()
-	pod.Spec.NodeName = node
+	pod.Spec.NodeName = node.MetaData.Name
 
 	URL := apiconfig.URL_Pod
 	URL = strings.Replace(URL, ":namespace", pod.MetaData.Namespace, -1)
