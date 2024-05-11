@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/apiconfig"
@@ -23,8 +24,7 @@ func NewReplicaController() *ReplicaController {
 
 func (rc *ReplicaController) Run() {
 	rr := runner.NewRunner()
- 	go rr.RunLoop(5*time.Second, 5*time.Second, rc.update_pod_num)
-	go rr.RunLoop(10*time.Second, 10*time.Second, rc.pod_collection)
+ 	rr.RunLoop(5*time.Second, 5*time.Second, rc.update_pod_num)
 }
 
 func (rc *ReplicaController) update_pod_num() {
@@ -32,41 +32,16 @@ func (rc *ReplicaController) update_pod_num() {
 	if err != nil {
 		return
 	}
-	
 
+	fmt.Printf("replicasets num:%d\n", len(replicasets))
+	
+	replicaMap := make(map[string]string)
 	for _, rs := range replicasets {
 		value := rs.MetaData.Namespace + "/" + rs.MetaData.Name
-		rc.replicaMap[rs.MetaData.UID] = value
+		replicaMap[rs.MetaData.UID] = value
+		fmt.Printf("replicasets uid :%s  set\n", rs.MetaData.UID)
 	}
 
-	pods, err := apirequest.GetAllPods()
-	if err != nil {
-		return
-	}
-
-	for _, replicaset := range replicasets {
-		var num = 0
-		var replica_pods []apiobj.Pod
-		for _, pod := range pods {
-
-			for key, value := range replicaset.Spec.Selector.MatchLabels {
-				if pod.MetaData.Labels[key] == value {
-					num++
-					replica_pods = append(replica_pods, pod)
-				}
-			}
-		}
-
-		if num < replicaset.Spec.Replicas {
-			rc.AddReplica(replicaset.Spec.Template, replicaset.Spec.Replicas - num, replicaset.MetaData)
-		} else if num > replicaset.Spec.Replicas {
-			rc.DeleteReplica(replica_pods, num - replicaset.Spec.Replicas)
-		}
-	}
-
-}
-
-func (rc *ReplicaController) pod_collection(){
 	pods, err := apirequest.GetAllPods()
 	if err != nil {
 		return
@@ -75,8 +50,34 @@ func (rc *ReplicaController) pod_collection(){
 		if pod.MetaData.Labels["replica_uid"] == "" {
 			continue
 		}
-		if _, ok := rc.replicaMap[pod.MetaData.Labels["replica_uid"]]; !ok {
+		if _, ok := replicaMap[pod.MetaData.Labels["replica_uid"]]; !ok {
+			fmt.Print("delete pod\n")
 			rc.DeleteReplica([]apiobj.Pod{pod}, 1)
+		}
+	}
+
+	for _, replicaset := range replicasets {
+		var num = 0
+		var replica_pods []apiobj.Pod
+		for _, pod := range pods {
+
+			for key, value := range replicaset.Spec.Selector.MatchLabels {
+				fmt.Printf("key:%s value:%s pod value:%s\n", key, value,pod.MetaData.Labels[key])
+				if pod.MetaData.Labels[key] == value {
+					num++
+					replica_pods = append(replica_pods, pod)
+				}
+			}
+		}
+
+		fmt.Printf("existing replica pod num:%d\n",num)
+
+		if num < replicaset.Spec.Replicas {
+			fmt.Printf("add pod num:%d\n",replicaset.Spec.Replicas - num)
+			rc.AddReplica(replicaset.Spec.Template, replicaset.Spec.Replicas - num, replicaset.MetaData)
+		} else if num > replicaset.Spec.Replicas {
+			fmt.Printf("delete pod num:%d\n",num - replicaset.Spec.Replicas)
+			rc.DeleteReplica(replica_pods, num - replicaset.Spec.Replicas)
 		}
 	}
 

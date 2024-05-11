@@ -33,6 +33,11 @@ func GetAllPods() ([]apiobj.Pod, error) {
 		return nil, fmt.Errorf("status code: %d", response.StatusCode)
 	}
 
+	if res["data"] == nil {
+		fmt.Println("empty pod list")
+		return []apiobj.Pod{}, nil
+	}
+
 	data, ok := res["data"].([]interface{})
 	if !ok {
 		fmt.Println("expected type []interface{} for field 'data', got something else")
@@ -74,6 +79,11 @@ func GetAllNodes() ([]apiobj.Node, error) {
 	if err != nil {
 		fmt.Println("decode pod error")
 		return nil, err
+	}
+
+	if res["data"] == nil {
+		fmt.Println("empty node list")
+		return []apiobj.Node{}, err
 	}
 
 	data, ok := res["data"].([]interface{})
@@ -119,6 +129,11 @@ func GetAllReplicaSets() ([]apiobj.ReplicaSet, error) {
 	if err != nil {
 		fmt.Println("decode pod error")
 		return nil, err
+	}
+
+	if res["data"] == nil {
+		fmt.Println("empty replica set list")
+		return []apiobj.ReplicaSet{}, err
 	}
 
 	data, ok := res["data"].([]interface{})
