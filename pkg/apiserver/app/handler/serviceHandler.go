@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/config/serviceconfig"
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
 	"net/http"
+
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 )
@@ -59,6 +62,9 @@ func AddService(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, name)
 
+	service.MetaData.UID = uuid.New().String()
+	service.Spec.ClusterIP = serviceconfig.AllocateIp()
+
 	serviceJson, err := json.Marshal(service)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
@@ -76,7 +82,7 @@ func AddService(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.ScheduleQueue, msgJson)
+	p.Publish(message.ServiceQueue, msgJson)
 }
 
 func UpdateService(c *gin.Context) {
@@ -112,6 +118,13 @@ func DeleteService(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, name)
+
+	var service apiobj.Service
+	res, _ := etcd.EtcdKV.Get(key)
+	json.Unmarshal([]byte(res), &service)
+	serviceIp := service.Spec.ClusterIP
+	serviceconfig.ReleaseIp(serviceIp)
+
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"delete": "fail"})

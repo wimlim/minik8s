@@ -10,3 +10,5 @@ spec:
     image: nginx:stable-alpine
     ports:
     - containerPort: 80
+  - name: redis
+    image: redis:alpine

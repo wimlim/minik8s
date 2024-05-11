@@ -8,8 +8,10 @@ type ServicePort struct {
 	NodePort   int    `yaml:"nodePort" json:"nodePort"`
 }
 type ServiceSpec struct {
-	Selector map[string]string `yaml:"selector" json:"selector"`
-	Ports    []ServicePort     `yaml:"ports" json:"ports"`
+	Selector  map[string]string `yaml:"selector" json:"selector"`
+	Ports     []ServicePort     `yaml:"ports" json:"ports"`
+	Type      string            `yaml:"type" json:"type"`
+	ClusterIP string            `yaml:"clusterIP" json:"clusterIP"`
 }
 type ServiceStatus struct {
 	LoadBalancer map[string]string `yaml:"loadBalancer" json:"loadBalancer"`
