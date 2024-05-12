@@ -63,8 +63,13 @@ func AddService(c *gin.Context) {
 	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, name)
 
 	service.MetaData.UID = uuid.New().String()
-	service.Spec.ClusterIP = serviceconfig.AllocateIp()
-	
+
+	if service.Spec.Type == "ClusterIP" {
+		service.Spec.ClusterIP = serviceconfig.AllocateIp()
+	}else if service.Spec.Type == "NodePort" {
+		service.Spec.ClusterIP = "0.0.0.0"
+	}
+
 	serviceJson, err := json.Marshal(service)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
