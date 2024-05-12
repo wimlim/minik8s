@@ -1,0 +1,15 @@
+apiVersion: "v1"
+kind: "Hpa"
+metadata:
+  name: "example-hpa"
+spec:
+  selector:
+    matchLabels:
+      app: "example-app"
+  scaleTargetRef:
+    apiVersion: "v1"
+    kind: "Deployment"
+    metadata:
+      name: "example-deployment"
+  minReplicas: 1
+  maxReplicas: 10
