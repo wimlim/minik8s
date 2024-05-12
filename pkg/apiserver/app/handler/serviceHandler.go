@@ -135,11 +135,12 @@ func DeleteService(c *gin.Context) {
 		Type: "Delete",
 		URL:  key,
 		Name: name,
+		Content: string(res),
 	}
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.ScheduleQueue, msgJson)
+	p.Publish(message.ServiceQueue, msgJson)
 }
 
 func GetServiceStatus(c *gin.Context) {

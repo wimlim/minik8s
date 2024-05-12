@@ -60,6 +60,14 @@ func (s *server) Bind() {
 	s.router.PUT((apiconfig.URL_ReplicaSet), handler.UpdateReplicaSet)
 	s.router.GET((apiconfig.URL_ReplicaSet), handler.GetReplicaSet)
 	s.router.GET((apiconfig.URL_ReplicaSetStatus), handler.GetReplicaSetStatus)
+	//HPA
+	s.router.GET((apiconfig.URL_GlobalHpas), handler.GetGlobalHpas)
+	s.router.GET((apiconfig.URL_AllHpas), handler.GetAllHpas)
+	s.router.POST((apiconfig.URL_Hpa), handler.AddHpa)
+	s.router.DELETE((apiconfig.URL_Hpa), handler.DeleteHpa)
+	s.router.PUT((apiconfig.URL_Hpa), handler.UpdateHpa)
+	s.router.GET((apiconfig.URL_Hpa), handler.GetHpa)
+	s.router.GET((apiconfig.URL_HpaStatus), handler.GetHpaStatus)
 
 	fmt.Println("server bind success")
 }

@@ -157,3 +157,53 @@ func GetAllReplicaSets() ([]apiobj.ReplicaSet, error) {
 
 	return replicaSets, nil
 }
+
+func GetAllHpas () ([]apiobj.Hpa, error) {
+	URL := apiconfig.URL_GlobalHpas
+	HttpURL := apiconfig.GetApiServerUrl() + URL
+
+	response, err := http.Get(HttpURL)
+	if err != nil {
+		fmt.Println("HTTP request error:", err)
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		fmt.Println("HTTP request returned status code:", response.StatusCode)
+		return nil, fmt.Errorf("status code: %d", response.StatusCode)
+	}
+
+	var res map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&res)
+	if err != nil {
+		fmt.Println("decode pod error")
+		return nil, err
+	}
+
+	if res["data"] == nil {
+		fmt.Println("empty hpa list")
+		return []apiobj.Hpa{}, err
+	}
+
+	data, ok := res["data"].([]interface{})
+	if !ok {
+		fmt.Println("expected type []interface{} for field 'data', got something else")
+		return nil, fmt.Errorf("type assertion failed for 'data'")
+	}
+
+	// 将 interface{} 列表转换为字符串列表
+	var hpas []apiobj.Hpa
+	for _, item := range data {
+		str, ok := item.(string)
+		if !ok {
+			fmt.Println("type assertion failed for an item in 'data'")
+			return nil, fmt.Errorf("type assertion failed for an item in 'data'")
+		}
+		var hpa apiobj.Hpa
+		json.Unmarshal([]byte(str), &hpa)
+		hpas = append(hpas, hpa)
+	}
+
+	return hpas, nil
+}
