@@ -24,26 +24,33 @@ func NewReplicaController() *ReplicaController {
 
 func (rc *ReplicaController) Run() {
 	rr := runner.NewRunner()
- 	rr.RunLoop(5*time.Second, 5*time.Second, rc.update_pod_num)
+ 	rr.RunLoop(5*time.Second, 5*time.Second, rc.update_repica_pod)
 }
 
-func (rc *ReplicaController) update_pod_num() {
+func (rc *ReplicaController) update_repica_pod() {
 	replicasets, err := apirequest.GetAllReplicaSets()
 	if err != nil {
 		return
 	}
 
 	fmt.Printf("replicasets num:%d\n", len(replicasets))
+
+	if len(replicasets) == 0 {
+		return
+	}
 	
 	replicaMap := make(map[string]string)
 	for _, rs := range replicasets {
 		value := rs.MetaData.Namespace + "/" + rs.MetaData.Name
 		replicaMap[rs.MetaData.UID] = value
-		fmt.Printf("replicasets uid :%s  set\n", rs.MetaData.UID)
+		// fmt.Printf("replicasets uid :%s  set\n", rs.MetaData.UID)
 	}
 
 	pods, err := apirequest.GetAllPods()
 	if err != nil {
+		return
+	}
+	if len(pods) == 0 {
 		return
 	}
 	for _, pod := range pods {
@@ -51,7 +58,7 @@ func (rc *ReplicaController) update_pod_num() {
 			continue
 		}
 		if _, ok := replicaMap[pod.MetaData.Labels["replica_uid"]]; !ok {
-			fmt.Print("delete pod\n")
+			fmt.Println("delete pod:", pod.MetaData.Name)
 			rc.DeleteReplica([]apiobj.Pod{pod}, 1)
 		}
 	}
@@ -62,7 +69,7 @@ func (rc *ReplicaController) update_pod_num() {
 		for _, pod := range pods {
 
 			for key, value := range replicaset.Spec.Selector.MatchLabels {
-				fmt.Printf("key:%s value:%s pod value:%s\n", key, value,pod.MetaData.Labels[key])
+				// fmt.Printf("key:%s value:%s pod value:%s\n", key, value,pod.MetaData.Labels[key])
 				if pod.MetaData.Labels[key] == value {
 					num++
 					replica_pods = append(replica_pods, pod)

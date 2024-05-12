@@ -58,9 +58,11 @@ type PodSpec struct {
 }
 
 type PodStatus struct {
-	Phase      string `yaml:"phase" json:"phase"`
-	PodIP      string `yaml:"podIP" json:"podIP"`
-	UpdateTime string `yaml:"updateTime" json:"updateTime"`
+	Phase      string  `yaml:"phase" json:"phase"`
+	PodIP      string  `yaml:"podIP" json:"podIP"`
+	UpdateTime string  `yaml:"updateTime" json:"updateTime"`
+	CpuUsage   float64 `yaml:"cpuUsage" json:"cpuUsage"`
+	MemUsage   float64 `yaml:"memUsage" json:"memUsage"`
 }
 
 type Pod struct {

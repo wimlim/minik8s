@@ -30,8 +30,8 @@ type HpaSpec struct {
 
 type HpaStatus struct {
 	Replicas      int `yaml:"replicas" json:"replicas"`
-	CpuPercent    int `yaml:"cpuPercent" json:"cpuPercent"`
-	MemoryPercent int `yaml:"memoryPercent" json:"memoryPercent"`
+	CpuUsage   int `yaml:"cpuUsage" json:"cpuUsage"`
+	MemUsage   int `yaml:"memUsage" json:"memUsage"`
 }
 
 type Hpa struct {

@@ -34,5 +34,6 @@ var Kind2URL = map[string]string{
 	"Pod":        URL_Pod,
 	"Service":    URL_Service,
 	"ReplicaSet": URL_ReplicaSet,
+	"Hpa":        URL_Hpa,
 }
 	

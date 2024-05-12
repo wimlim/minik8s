@@ -7,6 +7,7 @@ import (
 	"minik8s/pkg/etcd"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func GetGlobalHpas(c *gin.Context) {
@@ -44,6 +45,8 @@ func AddHpa(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdHpas+"/%s/%s", namespace, name)
+
+	hpa.MetaData.UID = uuid.New().String()
 
 	hpaJson, err := json.Marshal(hpa)
 	if err != nil {
