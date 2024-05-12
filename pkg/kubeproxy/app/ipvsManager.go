@@ -51,7 +51,19 @@ func (m *IPVSManager) AddService(serviceSpec apiobj.ServiceSpec, podIPs []string
 	}
 }
 
-func (m *IPVSManager) DeleteService(serviceID string) {
+func (m *IPVSManager) DeleteService(serviceSpec apiobj.ServiceSpec) {
+	for _, port := range serviceSpec.Ports {
+		svc := &ipvs.Service{
+			Address:       net.ParseIP(serviceSpec.ClusterIP),
+			Port:          uint16(port.Port),
+			Protocol:      syscall.IPPROTO_TCP,
+			AddressFamily: syscall.AF_INET,
+		}
+
+		if err := m.handle.DelService(svc); err != nil {
+			fmt.Printf("Failed to delete IPVS service on port %d: %v\n", port.Port, err)
+		}
+	}
 }
 
 func (m *IPVSManager) UpdateService(serviceSpec apiobj.ServiceSpec, podIPs []string) {

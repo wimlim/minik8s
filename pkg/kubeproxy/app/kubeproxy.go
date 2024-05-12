@@ -68,12 +68,13 @@ func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
 }
 
 func (kp *KubeProxy) handleServiceDelete(msg message.Message) {
-	var serviceid string
-	if err := json.Unmarshal([]byte(msg.Content), &serviceid); err != nil {
-		fmt.Println("Failed to unmarshal service ID:", err)
+	var service apiobj.Service
+	if err := json.Unmarshal([]byte(msg.Content), &service); err != nil {
+		fmt.Println("Failed to unmarshal service:", err)
 		return
 	}
-	kp.ipvsManager.DeleteService(serviceid)
+
+	kp.ipvsManager.DeleteService(service.Spec)
 }
 
 func (kp *KubeProxy) handleServiceUpdate(msg message.Message) {
