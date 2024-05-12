@@ -59,7 +59,7 @@ func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
 		}
 	}
 
-	kp.ipvsManager.AddPodsToService(service.Spec.ClusterIP, podIPs)
+	kp.ipvsManager.AddService(service.Spec, podIPs)
 }
 
 func (kp *KubeProxy) handleServiceDelete(msg message.Message) {
