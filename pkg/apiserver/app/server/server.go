@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"minik8s/pkg/apiserver/app/handler"
 	"minik8s/pkg/config/apiconfig"
+	"minik8s/pkg/config/serviceconfig"
 
 	"github.com/gin-gonic/gin"
 )
@@ -73,5 +74,6 @@ func (s *server) Bind() {
 }
 
 func (s *server) Run() {
+	serviceconfig.NewIpAllocator()
 	s.router.Run(fmt.Sprintf("0.0.0.0:%d", s.port))
 }

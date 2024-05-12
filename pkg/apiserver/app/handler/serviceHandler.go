@@ -64,7 +64,7 @@ func AddService(c *gin.Context) {
 
 	service.MetaData.UID = uuid.New().String()
 	service.Spec.ClusterIP = serviceconfig.AllocateIp()
-
+	
 	serviceJson, err := json.Marshal(service)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
