@@ -11,6 +11,7 @@ import (
 	"minik8s/pkg/kubelet/app/runtime/container"
 	"minik8s/pkg/kubelet/app/runtime/image"
 	"minik8s/pkg/minik8sTypes"
+	"minik8s/tools/weave"
 	"net"
 	"strconv"
 	"sync"
@@ -56,12 +57,12 @@ func CreatePauseContainer(pod *apiobj.Pod) (string, error) {
 		return "", err
 	}
 	if pod.Status.PodIP == "" {
-		pauseJSON, err := container.InspectContainer(pauseId)
+		res, err := weave.WeaveAttach(pauseId)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return "", err
 		}
-		pod.Status.PodIP = (*pauseJSON).NetworkSettings.DefaultNetworkSettings.IPAddress
+		pod.Status.PodIP = res
 		fmt.Println("\nPodIP:" + pod.Status.PodIP)
 	}
 	return pauseId, nil

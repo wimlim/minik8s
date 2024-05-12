@@ -28,3 +28,39 @@ func StartPod(pod *apiobj.Pod) error {
 	}
 	return nil
 }
+
+func DeletePod(pod *apiobj.Pod) error {
+	_, err := RemoveAllCommonContainer(pod)
+	if err != nil {
+		return err
+	}
+	_, err = RemovePauseContainer(pod)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func StopPod(pod *apiobj.Pod) error {
+	_, err := StopAllCommonContainer(pod)
+	if err != nil {
+		return err
+	}
+	_, err = StopPauseContainer(pod)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RestartPod(pod *apiobj.Pod) error {
+	_, err := RestartPauseContainer(pod)
+	if err != nil {
+		return err
+	}
+	_, err = RestartAllCommonContainer(pod)
+	if err != nil {
+		return err
+	}
+	return nil
+}
