@@ -3,6 +3,8 @@ package kubeproxy
 import (
 	"encoding/json"
 	"fmt"
+	"minik8s/pkg/apiobj"
+	"minik8s/pkg/apirequest"
 	"minik8s/pkg/message"
 
 	"github.com/streadway/amqp"
@@ -27,7 +29,37 @@ func NewKubeProxy() *KubeProxy {
 	}
 }
 
+func podMatchesService(pod *apiobj.Pod, service *apiobj.Service) bool {
+	labels := pod.MetaData.Labels
+	for key, value := range service.Spec.Selector {
+		if currentValue, ok := labels[key]; !ok || currentValue != value {
+			return false
+		}
+	}
+	return true
+}
+
 func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
+	var service apiobj.Service
+	if err := json.Unmarshal([]byte(msg.Content), &service); err != nil {
+		fmt.Println("Failed to unmarshal service:", err)
+		return
+	}
+
+	pods, err := apirequest.GetAllPods()
+	if err != nil {
+		fmt.Println("Failed to get all pods:", err)
+		return
+	}
+
+	var podIPs []string
+	for _, pod := range pods {
+		if podMatchesService(&pod, &service) {
+			podIPs = append(podIPs, pod.Status.PodIP)
+		}
+	}
+
+	kp.ipvsManager.AddService(service.Spec, podIPs)
 }
 
 func (kp *KubeProxy) handleServiceDelete(msg message.Message) {
