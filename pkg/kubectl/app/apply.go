@@ -56,6 +56,8 @@ func applyHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.Service{}
 	case "ReplicaSet":
 		apiObject = &apiobj.ReplicaSet{}
+	case "Hpa":
+		apiObject = &apiobj.Hpa{}
 	}
 
 	applyApiObject(content, apiObject)
