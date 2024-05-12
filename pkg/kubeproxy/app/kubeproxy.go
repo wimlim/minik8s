@@ -59,10 +59,21 @@ func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
 		}
 	}
 
+	if len(podIPs) == 0 {
+		fmt.Println("No pods match service selector")
+		return
+	}
+
 	kp.ipvsManager.AddService(service.Spec, podIPs)
 }
 
 func (kp *KubeProxy) handleServiceDelete(msg message.Message) {
+	var serviceid string
+	if err := json.Unmarshal([]byte(msg.Content), &serviceid); err != nil {
+		fmt.Println("Failed to unmarshal service ID:", err)
+		return
+	}
+	kp.ipvsManager.DeleteService(serviceid)
 }
 
 func (kp *KubeProxy) handleServiceUpdate(msg message.Message) {

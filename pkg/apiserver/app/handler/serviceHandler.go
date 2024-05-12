@@ -132,9 +132,9 @@ func DeleteService(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"delete": "success"})
 
 	msg := message.Message{
-		Type: "Delete",
-		URL:  key,
-		Name: name,
+		Type:    "Delete",
+		URL:     key,
+		Name:    name,
 		Content: string(res),
 	}
 	msgJson, _ := json.Marshal(msg)
