@@ -34,10 +34,6 @@ func (rc *ReplicaController) update_repica_pod() {
 	}
 
 	fmt.Printf("replicasets num:%d\n", len(replicasets))
-
-	if len(replicasets) == 0 {
-		return
-	}
 	
 	replicaMap := make(map[string]string)
 	for _, rs := range replicasets {
@@ -50,9 +46,7 @@ func (rc *ReplicaController) update_repica_pod() {
 	if err != nil {
 		return
 	}
-	if len(pods) == 0 {
-		return
-	}
+	
 	for _, pod := range pods {
 		if pod.MetaData.Labels["replica_uid"] == "" {
 			continue

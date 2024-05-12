@@ -110,8 +110,11 @@ func (hc *HpaController) HpaAddPod(podTemplate apiobj.Pod, num int, hpaMeta apio
 		if pod.MetaData.Namespace == "" {
 			pod.MetaData.Namespace = "default"
 		}
+		url = apiconfig.GetApiServerUrl() + url
+		err := apirequest.CreatePod(url, pod)
+		
 
-
+	}
 		
 
 
