@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 // execWeaveCommand executes a weave command with the given arguments and logs the output.
@@ -17,8 +18,8 @@ func execWeaveCommand(args ...string) (string, error) {
 	if err != nil {
 		return output, err
 	}
-
-	return output, nil
+	result := strings.TrimSuffix(output, "\r\n")
+	return result, nil
 }
 
 // WeaveAttach attaches a weave network to a container.
