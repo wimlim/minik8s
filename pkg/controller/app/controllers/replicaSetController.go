@@ -24,17 +24,17 @@ func NewReplicaController() *ReplicaController {
 
 func (rc *ReplicaController) Run() {
 	rr := runner.NewRunner()
- 	rr.RunLoop(5*time.Second, 5*time.Second, rc.update_repica_pod)
+	rr.RunLoop(5*time.Second, 5*time.Second, rc.update_replica_pod)
 }
 
-func (rc *ReplicaController) update_repica_pod() {
+func (rc *ReplicaController) update_replica_pod() {
 	replicasets, err := apirequest.GetAllReplicaSets()
 	if err != nil {
 		return
 	}
 
 	fmt.Printf("replicasets num:%d\n", len(replicasets))
-	
+
 	replicaMap := make(map[string]string)
 	for _, rs := range replicasets {
 		value := rs.MetaData.Namespace + "/" + rs.MetaData.Name
@@ -46,7 +46,7 @@ func (rc *ReplicaController) update_repica_pod() {
 	if err != nil {
 		return
 	}
-	
+
 	for _, pod := range pods {
 		if pod.MetaData.Labels["replica_uid"] == "" {
 			continue
@@ -71,19 +71,19 @@ func (rc *ReplicaController) update_repica_pod() {
 			}
 		}
 
-		fmt.Printf("existing replica pod num:%d\n",num)
+		fmt.Printf("existing replica pod num:%d\n", num)
 
 		if num < replicaset.Spec.Replicas {
-			fmt.Printf("add pod num:%d\n",replicaset.Spec.Replicas - num)
-			rc.AddReplica(replicaset.Spec.Template, replicaset.Spec.Replicas - num, replicaset.MetaData)
+			fmt.Printf("add pod num:%d\n", replicaset.Spec.Replicas-num)
+			rc.AddReplica(replicaset.Spec.Template, replicaset.Spec.Replicas-num, replicaset.MetaData)
 		} else if num > replicaset.Spec.Replicas {
-			fmt.Printf("delete pod num:%d\n",num - replicaset.Spec.Replicas)
-			rc.DeleteReplica(replica_pods, num - replicaset.Spec.Replicas)
+			fmt.Printf("delete pod num:%d\n", num-replicaset.Spec.Replicas)
+			rc.DeleteReplica(replica_pods, num-replicaset.Spec.Replicas)
 		}
 	}
 
 }
-	
+
 func (rc *ReplicaController) AddReplica(podTemplate apiobj.PodTemplateSpec, num int, replicaMeta apiobj.MetaData) error {
 	pod := apiobj.Pod{
 		ApiVersion: "v1",
@@ -99,20 +99,20 @@ func (rc *ReplicaController) AddReplica(podTemplate apiobj.PodTemplateSpec, num 
 		oldContainerName = append(oldContainerName, container.Name)
 	}
 
+	url := apiconfig.URL_Pod
+	url = apiconfig.GetApiServerUrl() + url
+
 	for i := 0; i < num; i++ {
 		pod.MetaData.Name = oldPodName + "-" + uuid.New().String()
 		for id := range oldContainerName {
 			pod.Spec.Containers[id].Name = oldContainerName[id] + "-" + uuid.New().String()
 		}
 
-		url := apiconfig.URL_Pod
-
 		if pod.MetaData.Namespace == "" {
 			pod.MetaData.Namespace = "default"
 		}
 		url = strings.Replace(url, ":namespace", pod.MetaData.Namespace, -1)
 		url = strings.Replace(url, ":name", pod.MetaData.Name, -1)
-		url = apiconfig.GetApiServerUrl() + url
 
 		apirequest.PostRequest(url, &pod)
 
@@ -122,7 +122,7 @@ func (rc *ReplicaController) AddReplica(podTemplate apiobj.PodTemplateSpec, num 
 }
 
 func (rc *ReplicaController) DeleteReplica(existPods []apiobj.Pod, num int) error {
-	
+
 	url := apiconfig.URL_Pod
 	url = apiconfig.GetApiServerUrl() + url
 	for i := 0; i < num; i++ {

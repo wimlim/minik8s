@@ -5,8 +5,8 @@ type VolumeMount struct {
 	MountPath string `yaml:"mountPath" json:"mountPath"`
 }
 type Resource struct {
-	CPU    int `yaml:"cpu" json:"cpu"`
-	Memory int `yaml:"memory" json:"memory"`
+	CPU    float64 `yaml:"cpu" json:"cpu"`
+	Memory float64 `yaml:"memory" json:"memory"`
 }
 type ContainerPort struct {
 	ContainerPort int    `yaml:"containerPort" json:"containerPort"`
