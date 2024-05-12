@@ -22,6 +22,11 @@ const (
 	URL_AllReplicaSets    = "/api/v1/namespaces/:namespace/replicasets"
 	URL_ReplicaSet        = "/api/v1/namespaces/:namespace/replicasets/:name"
 	URL_ReplicaSetStatus  = "/api/v1/namespaces/:namespace/replicasets/:name/status"
+
+	URL_GlobalHpas = "/api/v1/hpas"
+	URL_AllHpas    = "/api/v1/namespaces/:namespace/hpas"
+	URL_Hpa        = "/api/v1/namespaces/:namespace/hpas/:name"
+	URL_HpaStatus  = "/api/v1/namespaces/:namespace/hpas/:name/status"
 )
 
 var Kind2URL = map[string]string{

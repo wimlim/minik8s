@@ -5,4 +5,5 @@ const (
 	PATH_EtcdPods     = "/registry/pods"
 	PATH_EtcdServices = "/registry/services"
 	PATH_EtcdReplicas = "/registry/replicas"
+	PATH_EtcdHpas     = "/registry/hpas"
 )

@@ -75,11 +75,25 @@ func DeletePod(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
+
+	res, _ := etcd.EtcdKV.Get(key)
+
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"delete": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{"delete": "success"})
+
+	msg := message.Message{
+		Type:    "Delete",
+		URL:     key,
+		Name:    name,
+		Content: string(res),
+	}
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.PodQueue, msgJson)
 }
 
 func UpdatePod(c *gin.Context) {
