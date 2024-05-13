@@ -7,8 +7,10 @@ import (
 	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/apiconfig"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 )
 
@@ -30,10 +32,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 		if err != nil {
 			fmt.Println("Error getting pods:", err)
 		}
-		for _, pod := range pods {
-			jsonData, _ := json.MarshalIndent(pod, "", "    ")
-			fmt.Println(string(jsonData))
-		}
+		PrintPodsTable(pods)
 		return
 	}
 	if kind == "nodes" {
@@ -41,10 +40,7 @@ func getHandler(cmd *cobra.Command, args []string) {
 		if err != nil {
 			fmt.Println("Error getting nodes:", err)
 		}
-		for _, node := range nodes {
-			jsonData, _ := json.MarshalIndent(node, "", "    ")
-			fmt.Println(string(jsonData))
-		}
+		PrintNodesTable(nodes)
 		return
 	}
 
@@ -102,4 +98,38 @@ func getApiObject(arg string, apiObject apiobj.ApiObject) {
 		return
 	}
 	fmt.Println(string(podJson))
+}
+
+func PrintNodesTable(nodes []apiobj.Node) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Node Name", "ApiVersion", "Address"})
+
+	for _, node := range nodes {
+		t.AppendRow(table.Row{
+			node.MetaData.Name,
+			node.ApiVersion,
+			node.IP,
+		})
+	}
+	t.Render()
+}
+func PrintPodsTable(pods []apiobj.Pod) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Pod Name", "Namespace", "Containers"})
+
+	// 添加数据行
+	for _, pod := range pods {
+		containers := ""
+		for _, container := range pod.Spec.Containers {
+			containers += fmt.Sprintf("%s (%s)\n", container.Name, container.Image)
+		}
+		// 删除最后一个换行符
+		containers = strings.TrimSuffix(containers, "\n")
+
+		t.AppendRow([]interface{}{pod.MetaData.Name, pod.MetaData.Namespace, containers})
+	}
+
+	t.Render()
 }

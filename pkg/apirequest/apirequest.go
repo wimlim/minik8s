@@ -158,7 +158,7 @@ func GetAllReplicaSets() ([]apiobj.ReplicaSet, error) {
 	return replicaSets, nil
 }
 
-func GetAllHpas () ([]apiobj.Hpa, error) {
+func GetAllHpas() ([]apiobj.Hpa, error) {
 	URL := apiconfig.URL_GlobalHpas
 	HttpURL := apiconfig.GetApiServerUrl() + URL
 
