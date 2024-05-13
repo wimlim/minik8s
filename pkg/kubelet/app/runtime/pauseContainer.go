@@ -172,6 +172,9 @@ func RestartPauseContainer(pod *apiobj.Pod) (string, error) {
 }
 
 func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, error) {
+	// dns
+	dns := []string{}
+
 	//	Labels
 	pauseLabels := map[string]string{}
 	pauseLabels[minik8sTypes.Container_Label_PodUid] = pod.MetaData.UID
@@ -218,7 +221,6 @@ func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, 
 			pauseExposedPorts[bindingPortsKey] = struct{}{}
 		}
 	}
-
 	pauseContainerConfig := minik8sTypes.ContainerConfig{
 		Image:        PauseContainerImageRef,
 		Labels:       pauseLabels,
@@ -228,6 +230,7 @@ func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, 
 		Env:          nil,
 		IpcMode:      minik8sTypes.Container_IpcMode_Shareable,
 		Name:         minik8sTypes.Container_Pause_Name_Base + pod.MetaData.UID,
+		DNS:          dns,
 	}
 	return &pauseContainerConfig, nil
 }

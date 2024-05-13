@@ -27,6 +27,7 @@ type ContainerConfig struct {
 	Links        []string    `json:"links"`
 	Memory       int64       `json:"memory"`
 	NanoCPUs     int64       `json:"nanoCPUs"`
+	DNS          []string    `json:"Dns"` // List of DNS server to lookup
 
 	// name
 	Name string `json:"name"`
