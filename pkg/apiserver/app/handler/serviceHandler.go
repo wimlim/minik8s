@@ -51,7 +51,7 @@ func GetService(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"data": res,
+		"data": string(res),
 	})
 }
 
