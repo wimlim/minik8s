@@ -9,9 +9,9 @@ spec:
       app: hpa-example
   scaleTargetRef:
     apiVersion: v1
-    kind: Deployment
+    kind: Pod
     metadata:
-      name: my-deployment
+      name: hpa-pod
   metrics:
     cpu:
       target: 0.5  # 目标值为 50% 的 CPU 利用率，转换为小数形式即为 0.5

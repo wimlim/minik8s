@@ -43,8 +43,9 @@ func GetAllServices(c *gin.Context) {
 
 func GetService(c *gin.Context) {
 	// get service
+	namespace := c.Param("namespace")
 	name := c.Param("name")
-	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s", name)
+	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, name)
 	res, err := etcd.EtcdKV.Get(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
