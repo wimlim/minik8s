@@ -24,7 +24,7 @@ func NewReplicaController() *ReplicaController {
 
 func (rc *ReplicaController) Run() {
 	rr := runner.NewRunner()
-	rr.RunLoop(100*time.Second, 100*time.Second, rc.update_replica_pod)
+	rr.RunLoop(10*time.Second, 10*time.Second, rc.update_replica_pod)
 }
 
 func (rc *ReplicaController) update_replica_pod() {
