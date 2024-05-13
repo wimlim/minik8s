@@ -24,7 +24,7 @@ func NewReplicaController() *ReplicaController {
 
 func (rc *ReplicaController) Run() {
 	rr := runner.NewRunner()
-	rr.RunLoop(5*time.Second, 5*time.Second, rc.update_replica_pod)
+	rr.RunLoop(100*time.Second, 100*time.Second, rc.update_replica_pod)
 }
 
 func (rc *ReplicaController) update_replica_pod() {
@@ -52,7 +52,7 @@ func (rc *ReplicaController) update_replica_pod() {
 			continue
 		}
 		if _, ok := replicaMap[pod.MetaData.Labels["replica_uid"]]; !ok {
-			fmt.Println("delete pod:", pod.MetaData.Name)
+			fmt.Println("replica delete pod:", pod.MetaData.Name)
 			rc.DeleteReplica([]apiobj.Pod{pod}, 1)
 		}
 	}
@@ -71,13 +71,13 @@ func (rc *ReplicaController) update_replica_pod() {
 			}
 		}
 
-		fmt.Printf("existing replica pod num:%d\n", num)
+		fmt.Printf("replica exist pod num:%d\n", num)
 
 		if num < replicaset.Spec.Replicas {
-			fmt.Printf("add pod num:%d\n", replicaset.Spec.Replicas-num)
+			fmt.Printf("replica add pod num:%d\n", replicaset.Spec.Replicas-num)
 			rc.AddReplica(replicaset.Spec.Template, replicaset.Spec.Replicas-num, replicaset.MetaData)
 		} else if num > replicaset.Spec.Replicas {
-			fmt.Printf("delete pod num:%d\n", num-replicaset.Spec.Replicas)
+			fmt.Printf("replica delete pod num:%d\n", num-replicaset.Spec.Replicas)
 			rc.DeleteReplica(replica_pods, num-replicaset.Spec.Replicas)
 		}
 	}

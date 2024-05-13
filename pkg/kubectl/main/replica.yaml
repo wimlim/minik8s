@@ -6,12 +6,12 @@ spec:
   replicas: 3  # 指定要运行的Pod副本数量
   selector:
     matchLabels:
-      app: example-app  # 匹配要管理的Pod的标签
+      app: replica-example  # 匹配要管理的Pod的标签
   template:
     metadata:
       name : pod-replica
       labels:
-        app: example-app  # Pod的标签
+        app: replica-example  # Pod的标签
     spec:
       containers:
       - name: example-container

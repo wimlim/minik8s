@@ -24,7 +24,7 @@ func NewHpaController() *HpaController {
 
 func (hc *HpaController) Run() {
 	rr := runner.NewRunner()
-	rr.RunLoop(10*time.Second, 10*time.Second, hc.update_hpa_pod)
+	rr.RunLoop(5*time.Second, 5*time.Second, hc.update_hpa_pod)
 }
 
 func (hc *HpaController) update_hpa_pod() {
@@ -50,7 +50,7 @@ func (hc *HpaController) update_hpa_pod() {
 			continue
 		}
 		if _, ok := hpaMap[pod.MetaData.Labels["hpa_uid"]]; !ok {
-			fmt.Println("delete pod:", pod.MetaData.Name)
+			fmt.Println("hpa delete pod:", pod.MetaData.Name)
 			hc.HpaDeletePod([]apiobj.Pod{pod}, 1)
 		}
 	}
@@ -62,34 +62,41 @@ func (hc *HpaController) update_hpa_pod() {
 
 			for key, value := range hpa.Spec.Selector.MatchLabels {
 				if pod.MetaData.Labels[key] == value {
+					if pod.MetaData.Labels["hpa_uid"] == "" {
+						pod.MetaData.Labels["hpa_uid"] = hpa.MetaData.UID
+
+						url := apiconfig.URL_Pod
+						url = apiconfig.GetApiServerUrl() + url
+						url = strings.Replace(url, ":namespace", pod.MetaData.Namespace, -1)
+						url = strings.Replace(url, ":name", pod.MetaData.Name, -1)
+
+						apirequest.PutRequest(url, &pod)
+					}
+
 					num++
 					hpa_pods = append(hpa_pods, pod)
 				}
 			}
 		}
-		fmt.Printf("existing hpa pod num:%d\n", len(hpa_pods))
+		fmt.Printf("hpa exist pod num:%d\n", len(hpa_pods))
+
 		if len(hpa_pods) == 0 {
 			continue
 		}
-
-		if hpa.Spec.MinReplicas > num {
-			hc.HpaAddPod(hpa_pods[0], hpa.Spec.MinReplicas-num, hpa.MetaData)
-			return
-		}
-		if hpa.Spec.MaxReplicas < num {
-			hc.HpaDeletePod(hpa_pods, num-hpa.Spec.MaxReplicas)
-			return
-		}
-
 		podCpuUsage := hc.getPodCpuUsage(hpa_pods)
 		podMemUsage := hc.getPodMemUsage(hpa_pods)
+		fmt.Printf("hpa pod cpu usage:%f\n", podCpuUsage)
+		fmt.Printf("hpa mem usage:%f\n", podMemUsage)
 
 		targetReplicas := hc.getTargetReplicas(hpa, podCpuUsage, podMemUsage)
+		fmt.Printf("hpa target replicas:%d\n", targetReplicas)
 
-		if targetReplicas > hpa.Status.Replicas {
-			hc.HpaAddPod(hpa_pods[0], targetReplicas-hpa.Status.Replicas, hpa.MetaData)
-		} else if targetReplicas < hpa.Status.Replicas {
-			hc.HpaDeletePod(hpa_pods, hpa.Status.Replicas-targetReplicas)
+		if targetReplicas > num {
+			fmt.Printf("hpa add pod num:%d\n", targetReplicas-num)
+			hc.HpaAddPod(hpa_pods[0], targetReplicas-num, hpa.MetaData)
+		} else if targetReplicas < num {
+			fmt.Printf("hpa delete pod num:%d\n", num-targetReplicas)
+			hc.HpaDeletePod(hpa_pods, num-targetReplicas)
 		}
 		hpa.Status.Replicas = targetReplicas
 		hpa.Status.CpuUsage = podCpuUsage * float64(targetReplicas)
@@ -180,14 +187,18 @@ func (hc *HpaController) getTargetReplicas(hpa apiobj.Hpa, podCpuUsage float64, 
 	var targetCpuPercent = hpa.Spec.Metrics.CpuMetric.Target
 	var targetMemPercent = hpa.Spec.Metrics.MemMetric.Target
 
-	var cpuMaxReplicas = int(targetCpuPercent / podCpuUsage)
-	var memMaxReplicas = int(targetMemPercent / podMemUsage)
+	var cpuMaxReplicas = int(targetCpuPercent / float64(podCpuUsage))
+	var memMaxReplicas = int(targetMemPercent / float64(podMemUsage))
 
-	var expectedReplicas = min(cpuMaxReplicas, memMaxReplicas)
+	if cpuMaxReplicas < memMaxReplicas {
+		targetReplicas = cpuMaxReplicas
+	} else {
+		targetReplicas = memMaxReplicas
+	}
 
-	if expectedReplicas < hpa.Spec.MinReplicas {
+	if targetReplicas < hpa.Spec.MinReplicas {
 		targetReplicas = hpa.Spec.MinReplicas
-	} else if expectedReplicas > hpa.Spec.MaxReplicas {
+	} else if targetReplicas > hpa.Spec.MaxReplicas {
 		targetReplicas = hpa.Spec.MaxReplicas
 	}
 
@@ -198,7 +209,9 @@ func (hc *HpaController) getPodCpuUsage(pods []apiobj.Pod) float64 {
 	var cpuUsage = 0.0
 
 	for _, pod := range pods {
-		cpuUsage += pod.Status.CpuUsage
+		for _, container := range pod.Spec.Containers {
+			cpuUsage += container.Resources.CPU
+		}
 	}
 
 	cpuUsage = cpuUsage / float64(len(pods))
@@ -209,7 +222,9 @@ func (hc *HpaController) getPodMemUsage(pods []apiobj.Pod) float64 {
 	var memoryUsage = 0.0
 
 	for _, pod := range pods {
-		memoryUsage += pod.Status.MemUsage
+		for _, container := range pod.Spec.Containers {
+			memoryUsage += container.Resources.Memory
+		}
 	}
 
 	memoryUsage = memoryUsage / float64(len(pods))

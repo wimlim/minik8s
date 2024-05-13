@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: example-app
+      app: hpa-example
   scaleTargetRef:
     apiVersion: v1
     kind: Deployment
