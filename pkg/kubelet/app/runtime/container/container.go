@@ -43,6 +43,7 @@ func CreateContainer(containerConfig *minik8sTypes.ContainerConfig) (string, err
 			PidMode:      container.PidMode(containerConfig.PidMode),
 			VolumesFrom:  containerConfig.VolumesFrom,
 			Links:        containerConfig.Links,
+			DNS:          containerConfig.DNS,
 			Resources: container.Resources{
 				Memory:   containerConfig.Memory,
 				NanoCPUs: containerConfig.NanoCPUs,
