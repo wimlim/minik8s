@@ -3,6 +3,7 @@ package apiobj
 type Path struct {
 	SubPath     string `yaml:"subPath" json:"subPath"`
 	ServiceIp   string `yaml:"serviceIp" json:"serviceIp"`
+	ServiceName string `yaml:"serviceName" json:"serviceName"`
 	ServicePort int    `yaml:"servicePort" json:"servicePort"`
 }
 
