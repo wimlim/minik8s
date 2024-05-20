@@ -20,7 +20,7 @@ func reloadNginx() {
 	}
 }
 
-func addServerBlock(hostname string, paths []apiobj.Path) {
+func AddServerBlock(hostname string, paths []apiobj.Path) {
 	// open file
 	file, err := os.OpenFile(configPath, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -80,7 +80,7 @@ func addServerBlock(hostname string, paths []apiobj.Path) {
 	reloadNginx()
 }
 
-func deleteServerBlock(hostname string) {
+func DeleteServerBlock(hostname string) {
 	content, err := os.ReadFile(configPath)
 	if err != nil {
 		fmt.Println(err)
