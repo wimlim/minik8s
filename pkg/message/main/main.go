@@ -34,7 +34,7 @@ func main() {
 	// }
 	
 	var pod apiobj.ApiObject
-	pod, err := apirequest.GetRequest("http://127.0.0.1:8080/api/v1/namespaces/default/pods/http-server", "Pod")
+	pod, err := apirequest.GetRequest("default","http-server", "Pod")
 	pod = pod.(*apiobj.Pod)
 	if err != nil {
 		return

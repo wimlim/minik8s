@@ -1,15 +1,16 @@
 package apirequest
 
 import (
-	"minik8s/pkg/apiobj"
-	"net/http"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"minik8s/pkg/apiobj"
+	"minik8s/pkg/config/apiconfig"
+	"net/http"
+	"strings"
 )
 
-func GetRequest(url string, kind string) (apiobj.ApiObject, error) {
+func GetRequest(namespace string, name string, kind string) (apiobj.ApiObject, error) {
 
-	
 	var apiObject apiobj.ApiObject
 	switch kind {
 	case "Node":
@@ -25,7 +26,12 @@ func GetRequest(url string, kind string) (apiobj.ApiObject, error) {
 	case "Dns":
 		apiObject = &apiobj.Dns{}
 	}
-	response, err := http.Get(url)
+
+	URL := apiconfig.Kind2URL[kind]
+	URL = strings.Replace(URL, ":namespace", namespace, -1)
+	URL = strings.Replace(URL, ":name", name, -1)
+	URL = apiconfig.GetApiServerUrl() + URL
+	response, err := http.Get(URL)
 	if err != nil {
 		fmt.Printf("get  error")
 		return nil, err
