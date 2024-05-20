@@ -1,8 +1,10 @@
 package main
 
 import (
+	"minik8s/pkg/apirequest"
+	"minik8s/pkg/apiobj"
+	"encoding/json"
 	"fmt"
-	"minik8s/pkg/config/serviceconfig"
 )
 
 func main() {
@@ -24,11 +26,19 @@ func main() {
 	// 	fmt.Println(string(jsonData))
 	// }
 
-	for i := 0; i < 10; i++ {
-		var ip = serviceconfig.AllocateIp()
-		if ip != "" {
-			fmt.Println(ip)
-		}
+	// for i := 0; i < 10; i++ {
+	// 	var ip = serviceconfig.AllocateIp()
+	// 	if ip != "" {
+	// 		fmt.Println(ip)
+	// 	}
+	// }
+	
+	var pod apiobj.ApiObject
+	pod, err := apirequest.GetRequest("http://127.0.0.1:8080/api/v1/namespaces/default/pods/http-server", "Pod")
+	pod = pod.(*apiobj.Pod)
+	if err != nil {
+		return
 	}
-
+	jsonData, _ := json.Marshal(pod)
+	fmt.Println(string(jsonData))
 }
