@@ -10,6 +10,8 @@ spec:
     image: nginx:stable-alpine
     ports:
     - containerPort: 80
-    resources:
-      cpu: 0.1
-      memory: 0.1
+  - name: http-server
+    image: python:3.9-alpine
+    command: ["python", "-m", "http.server", "4335"]
+    ports:
+    - containerPort: 4335

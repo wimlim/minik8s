@@ -11,8 +11,8 @@ type HpaSelector struct {
 }
 
 type HpaMetric struct {
-	CpuMetric    HpaCpuMetric    `yaml:"cpu" json:"cpu"`
-	MemoryMetric HpaMemoryMetric `yaml:"memory" json:"memory"`
+	CpuMetric HpaCpuMetric    `yaml:"cpu" json:"cpu"`
+	MemMetric HpaMemoryMetric `yaml:"mem" json:"mem"`
 }
 
 type HpaScaleTarget struct {
@@ -24,14 +24,15 @@ type HpaScaleTarget struct {
 type HpaSpec struct {
 	Selector       HpaSelector    `yaml:"selector" json:"selector"`
 	ScaleTargetRef HpaScaleTarget `yaml:"scaleTargetRef" json:"scaleTargetRef"`
+	Metrics        HpaMetric      `yaml:"metrics" json:"metrics"`
 	MinReplicas    int            `yaml:"minReplicas" json:"minReplicas"`
 	MaxReplicas    int            `yaml:"maxReplicas" json:"maxReplicas"`
 }
 
 type HpaStatus struct {
-	Replicas      int `yaml:"replicas" json:"replicas"`
-	CpuUsage   int `yaml:"cpuUsage" json:"cpuUsage"`
-	MemUsage   int `yaml:"memUsage" json:"memUsage"`
+	Replicas int     `yaml:"replicas" json:"replicas"`
+	CpuUsage float64 `yaml:"cpuUsage" json:"cpuUsage"`
+	MemUsage float64 `yaml:"memUsage" json:"memUsage"`
 }
 
 type Hpa struct {

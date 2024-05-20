@@ -69,6 +69,14 @@ func (s *server) Bind() {
 	s.router.PUT((apiconfig.URL_Hpa), handler.UpdateHpa)
 	s.router.GET((apiconfig.URL_Hpa), handler.GetHpa)
 	s.router.GET((apiconfig.URL_HpaStatus), handler.GetHpaStatus)
+	//DNS
+	s.router.GET((apiconfig.URL_GlobalDns), handler.GetGlobalDns)
+	s.router.GET((apiconfig.URL_AllDns), handler.GetAllDns)
+	s.router.POST((apiconfig.URL_Dns), handler.AddDns)
+	s.router.DELETE((apiconfig.URL_Dns), handler.DeleteDns)
+	s.router.PUT((apiconfig.URL_Dns), handler.UpdateDns)
+	s.router.GET((apiconfig.URL_Dns), handler.GetDns)
+	s.router.GET((apiconfig.URL_DnsStatus), handler.GetDnsStatus)
 
 	fmt.Println("server bind success")
 }

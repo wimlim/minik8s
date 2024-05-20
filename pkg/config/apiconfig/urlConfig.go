@@ -27,6 +27,11 @@ const (
 	URL_AllHpas    = "/api/v1/namespaces/:namespace/hpas"
 	URL_Hpa        = "/api/v1/namespaces/:namespace/hpas/:name"
 	URL_HpaStatus  = "/api/v1/namespaces/:namespace/hpas/:name/status"
+
+	URL_GlobalDns = "/api/v1/dns"
+	URL_AllDns    = "/api/v1/namespaces/:namespace/dns"
+	URL_Dns       = "/api/v1/namespaces/:namespace/dns/:name"
+	URL_DnsStatus = "/api/v1/namespaces/:namespace/dns/:name/status"
 )
 
 var Kind2URL = map[string]string{
@@ -35,5 +40,6 @@ var Kind2URL = map[string]string{
 	"Service":    URL_Service,
 	"ReplicaSet": URL_ReplicaSet,
 	"Hpa":        URL_Hpa,
+	"Dns":        URL_Dns,
 }
 	
