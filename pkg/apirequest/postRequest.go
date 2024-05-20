@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"net/http"
 )
-func PostRequest(url string, apiobj interface{}) error{
+
+func PostRequest(url string, apiobj interface{}) error {
 	objJson, err := json.Marshal(apiobj)
 	if err != nil {
 		fmt.Printf("marshal  error\n")

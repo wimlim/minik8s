@@ -55,6 +55,8 @@ func deleteHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.ReplicaSet{}
 	case "Hpa":
 		apiObject = &apiobj.Hpa{}
+	case "Dns":
+		apiObject = &apiobj.Dns{}
 	}
 
 	deleteApiObject(content, apiObject)
