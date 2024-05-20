@@ -5,9 +5,9 @@ import (
 	"minik8s/pkg/apiserver/app/handler"
 	"minik8s/pkg/config/apiconfig"
 	"minik8s/pkg/config/serviceconfig"
-	"os/exec"
 	"minik8s/pkg/etcd"
-	"mink8s/tools/weave"
+	"minik8s/tools/weave"
+	"os/exec"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,11 +33,11 @@ func SetServer(s *server) *server {
 
 func (s *server) StartDnsNginx() {
 	cmd := exec.Command("docker", "run", "-d", "--name", "my-nginx-container", "-p", "80:80", "-v", "/root/minik8s/pkg/nginx:/etc/nginx/conf.d", "nginx")
-    output, err := cmd.CombinedOutput()
-    if err != nil {
-        fmt.Println("Error executing command:", err)
-        return
-    }
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return
+	}
 	ip, err := weave.WeaveAttach(string(output))
 	if err != nil {
 		fmt.Println("Error executing command:", err)

@@ -54,7 +54,7 @@ func AddDns(c *gin.Context) {
 	etcd.EtcdKV.Put(key, dnsJson)
 	c.JSON(200, gin.H{"add": string(dnsJson)})
 
-	res , err := etcd.EtcdKV.Get(PATH_EtcdDnsNginxIP)
+	res, err := etcd.EtcdKV.Get(etcd.PATH_EtcdDnsNginxIP)
 	if err != nil {
 		fmt.Println("get etcd error")
 	}
@@ -91,7 +91,7 @@ func UpdateDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
-	
+
 	dnsJson, err := json.Marshal(dns)
 	if err != nil {
 		c.JSON(500, gin.H{"update": "fail"})
