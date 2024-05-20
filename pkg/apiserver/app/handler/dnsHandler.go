@@ -6,6 +6,7 @@ import (
 
 	"encoding/json"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/message"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,6 +53,23 @@ func AddDns(c *gin.Context) {
 	}
 	etcd.EtcdKV.Put(key, dnsJson)
 	c.JSON(200, gin.H{"add": string(dnsJson)})
+
+	res , err := etcd.EtcdKV.Get(PATH_EtcdDnsNginxIP)
+	if err != nil {
+		fmt.Println("get etcd error")
+	}
+	nginxIp := string(res)
+	msg := message.Message{
+		Type:    "Add",
+		URL:     key,
+		Name:    dns.Spec.Host,
+		Content: nginxIp,
+	}
+
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.DnsQueue, msgJson)
 }
 
 func DeleteDns(c *gin.Context) {

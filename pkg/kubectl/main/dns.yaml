@@ -3,3 +3,5 @@ kind: Dns
 metadata:
   name: example-dns
   namespace: default
+spec:
+  host: example.com
