@@ -30,6 +30,15 @@ func WeaveAttach(containerID string) (string, error) {
 	return execWeaveCommand("attach", containerID)
 }
 
+func WeaveExpose(serviceID string) error {
+	if serviceID == "" {
+		return errors.New("serviceID is empty")
+	}
+	_, err := execWeaveCommand("expose", serviceID+"/32")
+	return err
+
+}
+
 // WeaveFindIpByContainerID finds the IP address of a container using weave.
 func WeaveFindIpByContainerID(containerID string) (string, error) {
 	if containerID == "" {
