@@ -5,6 +5,9 @@ import (
 	"minik8s/pkg/apiserver/app/handler"
 	"minik8s/pkg/config/apiconfig"
 	"minik8s/pkg/config/serviceconfig"
+	"minik8s/pkg/etcd"
+	"minik8s/tools/weave"
+	"os/exec"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,6 +29,22 @@ func NewServer(ip string, port int) *server {
 func SetServer(s *server) *server {
 	s.Bind()
 	return s
+}
+
+func (s *server) StartDnsNginx() {
+	cmd := exec.Command("docker", "run", "-d", "--name", "my-nginx-container", "-p", "80:80", "-v", "/root/minik8s/pkg/nginx:/etc/nginx/conf.d", "nginx")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return
+	}
+	ip, err := weave.WeaveAttach(string(output))
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return
+	}
+	etcd.EtcdKV.Put(etcd.PATH_EtcdDnsNginxIP, []byte(ip))
+	fmt.Println(ip)
 }
 
 func (s *server) Bind() {
@@ -83,5 +102,6 @@ func (s *server) Bind() {
 
 func (s *server) Run() {
 	serviceconfig.NewIpAllocator()
+	s.StartDnsNginx()
 	s.router.Run(fmt.Sprintf("0.0.0.0:%d", s.port))
 }

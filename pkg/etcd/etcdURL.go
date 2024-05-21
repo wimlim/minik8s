@@ -8,4 +8,6 @@ const (
 	PATH_EtcdReplicas  = "/registry/replicas"
 	PATH_EtcdHpas      = "/registry/hpas"
 	PATH_EtcdDns       = "/registry/dns"
+
+	PATH_EtcdDnsNginxIP = "/registry/nginx/ip"
 )
