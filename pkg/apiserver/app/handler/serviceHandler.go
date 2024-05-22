@@ -72,7 +72,10 @@ func AddService(c *gin.Context) {
 		service.Spec.ClusterIP = "0.0.0.0"
 	}
 
-	_:= weave.WeaveExpose(service.Spec.ClusterIP)
+	err := weave.WeaveExpose(service.Spec.ClusterIP)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
+	}
 
 	serviceJson, err := json.Marshal(service)
 	if err != nil {
