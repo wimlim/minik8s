@@ -96,6 +96,20 @@ func (s *server) Bind() {
 	s.router.PUT((apiconfig.URL_Dns), handler.UpdateDns)
 	s.router.GET((apiconfig.URL_Dns), handler.GetDns)
 	s.router.GET((apiconfig.URL_DnsStatus), handler.GetDnsStatus)
+	//FUNCTION
+	s.router.GET((apiconfig.URL_GlobalFunctions), handler.GetGlobalFunctions)
+	s.router.GET((apiconfig.URL_AllFunctions), handler.GetAllFunctions)
+	s.router.POST((apiconfig.URL_Function), handler.AddFunction)
+	s.router.DELETE((apiconfig.URL_Function), handler.DeleteFunction)
+	s.router.PUT((apiconfig.URL_Function), handler.UpdateFunction)
+	s.router.GET((apiconfig.URL_Function), handler.GetFunction)
+	//WORKFLOW
+	s.router.GET((apiconfig.URL_GlobalWorkflows), handler.GetGlobalWorkflows)
+	s.router.GET((apiconfig.URL_AllWorkflows), handler.GetAllWorkflows)
+	s.router.POST((apiconfig.URL_Workflow), handler.AddWorkflow)
+	s.router.DELETE((apiconfig.URL_Workflow), handler.DeleteWorkflow)
+	s.router.PUT((apiconfig.URL_Workflow), handler.UpdateWorkflow)
+	s.router.GET((apiconfig.URL_Workflow), handler.GetWorkflow)
 
 	fmt.Println("server bind success")
 }
