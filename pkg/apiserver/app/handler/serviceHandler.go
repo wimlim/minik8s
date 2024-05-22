@@ -7,6 +7,7 @@ import (
 	"minik8s/pkg/config/serviceconfig"
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
+	"minik8s/tools/weave"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -69,6 +70,11 @@ func AddService(c *gin.Context) {
 		service.Spec.ClusterIP = serviceconfig.AllocateIp()
 	}else if service.Spec.Type == "NodePort" {
 		service.Spec.ClusterIP = "0.0.0.0"
+	}
+
+	err := weave.WeaveExpose(service.Spec.ClusterIP)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
 	}
 
 	serviceJson, err := json.Marshal(service)
