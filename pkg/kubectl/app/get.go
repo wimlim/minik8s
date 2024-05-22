@@ -56,6 +56,10 @@ func getHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.Hpa{}
 	case "Dns":
 		apiObject = &apiobj.Dns{}
+	case "Function":
+		apiObject = &apiobj.Function{}
+	case "Workflow":
+		apiObject = &apiobj.Workflow{}
 	}
 
 	getApiObject(args[1], apiObject)
