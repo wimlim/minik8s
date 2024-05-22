@@ -7,6 +7,6 @@ spec:
   host: example-service
   paths:
     - subPath: /path
-      serviceIp: 192.168.1.158  # 这里需要填入实际的Service ClusterIP
+      serviceIp: 3.3.3.244  # 这里需要填入实际的Service ClusterIP
       serviceName: example-service
       servicePort: 4335
