@@ -1,5 +1,19 @@
 package apiobj
 
+import (
+	"time"
+
+	"github.com/docker/docker/api/types"
+)
+
+const (
+	PodPhase_Pending   = "Pending"
+	PodPhase_Running   = "Running"
+	PodPhase_Succeeded = "Succeeded"
+	PodPhase_Failed    = "Failed"
+	PodPhase_Unknown   = "Unknown"
+)
+
 type VolumeMount struct {
 	Name      string `yaml:"name" json:"name"`
 	MountPath string `yaml:"mountPath" json:"mountPath"`
@@ -58,11 +72,12 @@ type PodSpec struct {
 }
 
 type PodStatus struct {
-	Phase      string  `yaml:"phase" json:"phase"`
-	PodIP      string  `yaml:"podIP" json:"podIP"`
-	UpdateTime string  `yaml:"updateTime" json:"updateTime"`
-	CpuUsage   float64 `yaml:"cpuUsage" json:"cpuUsage"`
-	MemUsage   float64 `yaml:"memUsage" json:"memUsage"`
+	Phase          string                 `yaml:"phase" json:"phase"`
+	PodIP          string                 `yaml:"podIP" json:"podIP"`
+	UpdateTime     time.Time              `yaml:"updateTime" json:"updateTime"`
+	CpuUsage       float64                `yaml:"cpuUsage" json:"cpuUsage"`
+	MemUsage       float64                `yaml:"memUsage" json:"memUsage"`
+	ContainerState []types.ContainerState `yaml:"containerState" json:"containerState"`
 }
 
 type Pod struct {

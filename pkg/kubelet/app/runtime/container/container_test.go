@@ -104,3 +104,12 @@ func TestRemoveContainer(t *testing.T) {
 		}
 	}
 }
+
+func TestGetContainerStatus(t *testing.T) {
+	statsInfo, err := getContainerStatus("8afe493e53ce")
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("%f\n", calcCPUUsage(statsInfo))
+	fmt.Printf("%f\n", calcMemoryUsage(statsInfo))
+}
