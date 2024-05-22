@@ -30,13 +30,34 @@ func WeaveAttach(containerID string) (string, error) {
 	return execWeaveCommand("attach", containerID)
 }
 
+// WeaveExpose exposes a service using weave.
 func WeaveExpose(serviceID string) error {
 	if serviceID == "" {
 		return errors.New("serviceID is empty")
 	}
 	_, err := execWeaveCommand("expose", serviceID+"/32")
 	return err
+}
 
+// WeaveHide hides a service using weave.
+func WeaveHide(serviceID string) error {
+	if serviceID == "" {
+		return errors.New("serviceID is empty")
+	}
+	_, err := execWeaveCommand("hide", serviceID)
+	return err
+}
+
+// WeaveDNSAdd adds a DNS entry using weave.
+func WeaveDNSAdd(hostname string, ip string) error {
+	if hostname == "" {
+		return errors.New("hostname is empty")
+	}
+	if ip == "" {
+		return errors.New("ip is empty")
+	}
+	_, err := execWeaveCommand("dns-add", hostname, ip)
+	return err
 }
 
 // WeaveFindIpByContainerID finds the IP address of a container using weave.
