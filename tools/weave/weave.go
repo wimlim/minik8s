@@ -60,15 +60,6 @@ func WeaveDNSAdd(hostname string, ip string) error {
 	return err
 }
 
-// WeaveDNSRemove removes a DNS entry using weave.
-func WeaveDNSRemove(hostname string) error {
-	if hostname == "" {
-		return errors.New("hostname is empty")
-	}
-	_, err := execWeaveCommand("dns-remove", hostname)
-	return err
-}
-
 // WeaveFindIpByContainerID finds the IP address of a container using weave.
 func WeaveFindIpByContainerID(containerID string) (string, error) {
 	if containerID == "" {

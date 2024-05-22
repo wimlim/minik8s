@@ -6,7 +6,7 @@ import (
 
 	"encoding/json"
 	"minik8s/pkg/apiobj"
-	"minik8s/tools/weave"
+	"minik8s/pkg/message"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,7 +46,7 @@ func AddDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
-	weave.WeaveDNSAdd(dns.Spec.Host, etcd.PATH_EtcdDnsNginxIP)
+
 	dnsJson, err := json.Marshal(dns)
 	if err != nil {
 		c.JSON(500, gin.H{"add": "fail"})
@@ -54,6 +54,22 @@ func AddDns(c *gin.Context) {
 	etcd.EtcdKV.Put(key, dnsJson)
 	c.JSON(200, gin.H{"add": string(dnsJson)})
 
+	res, err := etcd.EtcdKV.Get(etcd.PATH_EtcdDnsNginxIP)
+	if err != nil {
+		fmt.Println("get etcd error")
+	}
+	nginxIp := string(res)
+	msg := message.Message{
+		Type:    "Add",
+		URL:     key,
+		Name:    dns.Spec.Host,
+		Content: nginxIp,
+	}
+
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.DnsQueue, msgJson)
 }
 
 func DeleteDns(c *gin.Context) {
@@ -61,17 +77,7 @@ func DeleteDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
-	res, err := etcd.EtcdKV.Get(key)
-	if err != nil {
-		c.JSON(500, gin.H{"delete": "fail"})
-	}
-	var dns apiobj.Dns
-	err = json.Unmarshal(res, &dns)
-	if err != nil {
-		c.JSON(500, gin.H{"delete": "fail"})
-	}
-	weave.WeaveDNSRemove(dns.Spec.Host)
-	err = etcd.EtcdKV.Delete(key)
+	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
 		c.JSON(500, gin.H{"delete": "fail"})
 	}
