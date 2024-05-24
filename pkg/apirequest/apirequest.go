@@ -6,12 +6,10 @@ import (
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/config/apiconfig"
 	"net/http"
-	"strings"
 )
 
 func GetAllPods() ([]apiobj.Pod, error) {
-	URL := apiconfig.URL_AllPods
-	URL = strings.Replace(URL, ":namespace", "default", -1)
+	URL := apiconfig.URL_GlobalPods
 	HttpURL := apiconfig.GetApiServerUrl() + URL
 
 	response, err := http.Get(HttpURL)

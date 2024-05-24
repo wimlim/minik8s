@@ -1,6 +1,7 @@
 package apiobj
 
 type FunctionSpec struct {
+	Path    string `yaml:"path" json:"path"`
 	Content []byte `yaml:"content" json:"content"`
 }
 
