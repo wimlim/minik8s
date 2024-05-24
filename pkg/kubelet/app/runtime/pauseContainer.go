@@ -174,7 +174,7 @@ func RestartPauseContainer(pod *apiobj.Pod) (string, error) {
 func parsePauseContainerConfig(pod *apiobj.Pod) (*minik8sTypes.ContainerConfig, error) {
 	// dns
 	dns := []string{}
-
+	dns = append(dns, "172.17.0.1")
 	//	Labels
 	pauseLabels := map[string]string{}
 	pauseLabels[minik8sTypes.Container_Label_PodUid] = pod.MetaData.UID
