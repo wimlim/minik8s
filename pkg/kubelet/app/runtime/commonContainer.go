@@ -61,9 +61,9 @@ func StartAllCommonContainer(pod *apiobj.Pod) (string, error) {
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodUid+"="+pod.MetaData.UID)
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodName+"="+pod.MetaData.Name)
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodNamespace+"="+pod.MetaData.Namespace)
-	for labelKey, labelValue := range pod.MetaData.Labels {
-		filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
-	}
+	// for labelKey, labelValue := range pod.MetaData.Labels {
+	// 	filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
+	// }
 	commonContainers, err := container.ListContainerWithFilters(filterArgs)
 	if err != nil {
 		fmt.Println("Error in StartAllCommonContainer: container.ListContainerWithFilters")
@@ -88,9 +88,9 @@ func StopAllCommonContainer(pod *apiobj.Pod) (string, error) {
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodUid+"="+pod.MetaData.UID)
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodName+"="+pod.MetaData.Name)
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodNamespace+"="+pod.MetaData.Namespace)
-	for labelKey, labelValue := range pod.MetaData.Labels {
-		filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
-	}
+	// for labelKey, labelValue := range pod.MetaData.Labels {
+	// 	filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
+	// }
 	commonContainers, err := container.ListContainerWithFilters(filterArgs)
 	if err != nil {
 		fmt.Println("Error in StopAllCommonContainer: container.ListContainerWithFilters")
@@ -115,9 +115,9 @@ func RestartAllCommonContainer(pod *apiobj.Pod) (string, error) {
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodUid+"="+pod.MetaData.UID)
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodName+"="+pod.MetaData.Name)
 	filterArgs.Add(minik8sTypes.Container_Filter_Label, minik8sTypes.Container_Label_PodNamespace+"="+pod.MetaData.Namespace)
-	for labelKey, labelValue := range pod.MetaData.Labels {
-		filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
-	}
+	// for labelKey, labelValue := range pod.MetaData.Labels {
+	// 	filterArgs.Add(minik8sTypes.Container_Filter_Label, labelKey+"="+labelValue)
+	// }
 	commonContainers, err := container.ListContainerWithFilters(filterArgs)
 	if err != nil {
 		fmt.Println("Error in RestartAllCommonContainer: container.ListContainerWithFilters")
