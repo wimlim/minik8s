@@ -7,6 +7,7 @@ import (
 	"minik8s/pkg/config/serviceconfig"
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
+	nginxmanager "minik8s/pkg/nginx/app"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -71,6 +72,8 @@ func AddService(c *gin.Context) {
 		service.Spec.ClusterIP = "0.0.0.0"
 	}
 
+	// update nginx config
+	nginxmanager.AddServiceIPVS(service.Spec)
 	serviceJson, err := json.Marshal(service)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
@@ -130,6 +133,8 @@ func DeleteService(c *gin.Context) {
 	json.Unmarshal([]byte(res), &service)
 	serviceIp := service.Spec.ClusterIP
 	serviceconfig.ReleaseIp(serviceIp)
+	// update nginx config
+	nginxmanager.DeleteServiceIPVS(service.Spec)
 
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
