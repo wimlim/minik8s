@@ -72,6 +72,7 @@ func AddDns(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
+	fmt.Println("publish dns message")
 	p.Publish(message.DnsQueue, msgJson)
 }
 

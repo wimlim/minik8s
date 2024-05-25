@@ -14,8 +14,9 @@ import (
 )
 
 type KubeProxy struct {
-	ipvsManager *IPVSManager
-	subscriber  *message.Subscriber
+	ipvsManager   *IPVSManager
+	subscriber    *message.Subscriber
+	dnsSubscriber *message.Subscriber
 }
 
 func NewKubeProxy() *KubeProxy {
@@ -84,6 +85,7 @@ func (kp *KubeProxy) handleServiceUpdate(msg message.Message) {
 }
 
 func (kp *KubeProxy) handleDNSAdd(msg message.Message) {
+	fmt.Println("handleDNSAdd")
 	hostname := msg.Name
 	nginxip := msg.Content
 	file := "/etc/hosts"
@@ -132,6 +134,7 @@ func (kp *KubeProxy) handleDNSDelete(msg message.Message) {
 func (kp *KubeProxy) Run() {
 	defer kp.subscriber.Close()
 	defer kp.ipvsManager.Close()
+	defer kp.dnsSubscriber.Close()
 
 	kp.subscriber.Subscribe(message.ServiceQueue, func(d amqp.Delivery) {
 		var msg message.Message
@@ -151,7 +154,8 @@ func (kp *KubeProxy) Run() {
 		}
 	})
 
-	kp.subscriber.Subscribe(message.DnsQueue, func(d amqp.Delivery) {
+	kp.dnsSubscriber.Subscribe(message.DnsQueue, func(d amqp.Delivery) {
+		fmt.Println("handle dns message")
 		var msg message.Message
 		err := json.Unmarshal(d.Body, &msg)
 		if err != nil {
