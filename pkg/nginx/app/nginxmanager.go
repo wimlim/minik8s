@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var configPath = "/root/minik8s/nginx/default.conf"
+var configPath = "/root/minik8s/pkg/nginx/default.conf"
 
 func reloadNginx() {
 	cmd := exec.Command("docker", "exec", "my-nginx-container", "nginx", "-s", "reload")
@@ -31,16 +31,8 @@ func AddServerBlock(hostname string, paths []apiobj.Path) {
 	defer file.Close()
 
 	// write server block
-	_, err = file.WriteString("server {\n")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	_, err = file.WriteString("    listen 80;\n")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	file.WriteString("server {\n")
+	file.WriteString("    listen 80;\n")
 	_, err = file.WriteString("    server_name " + hostname + ";\n")
 	if err != nil {
 		fmt.Println(err)
@@ -77,6 +69,16 @@ func AddServerBlock(hostname string, paths []apiobj.Path) {
 			fmt.Println(err)
 			return
 		}
+		_, err = file.WriteString("    }\n")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+	_, err = file.WriteString("}\n")
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 	reloadNginx()
 }
