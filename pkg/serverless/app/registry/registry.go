@@ -11,6 +11,8 @@ import (
 	"minik8s/pkg/minik8sTypes"
 	"os"
 
+	"path/filepath"
+
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 
@@ -52,7 +54,6 @@ func NewRegistry() *Registry {
 	return &Registry{}
 }
 
-
 func (r *Registry) PullImage(imageRef string) {
 	cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 
@@ -78,10 +79,32 @@ func (r *Registry) PushImage(imageRef string) {
 }
 
 func (r *Registry) BuildImage(f apiobj.Function) {
-	os.Mkdir(f.MetaData.UID, 0777)
 
-	curDir, _ := os.Getwd()
+	curpath, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Getwd error:", err)
+	}
+	err = os.Mkdir(f.MetaData.UID, 0777)
+	if err != nil {
+		fmt.Println("Mkdir error:", err)
+	}
+	fd, err := os.Create(filepath.Join(curpath, f.MetaData.UID, "func.py"))
+	if err != nil {
+		fmt.Println("Create error:", err)
+	}
+	defer fd.Close()
+	_, err = fd.Write(f.Spec.Content)
+	if err != nil {
+		fmt.Println("Write error:", err)
+	}
 
-	
+	Dockerfile, err := os.Create(filepath.Join(curpath, f.MetaData.UID, "Dockerfile"))
+	if err != nil {
+		fmt.Println("Create dockerfile error:", err)
+	}
+	Dockerfile.WriteString("FROM server_base:latest\n")
+	Dockerfile.WriteString("COPY func.py /app/\n")
+
+	Dockerfile.Close()
 
 }
