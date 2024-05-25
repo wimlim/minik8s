@@ -1,0 +1,137 @@
+package kubectl
+
+import (
+	"encoding/json"
+	"fmt"
+	"minik8s/pkg/apiobj"
+	"minik8s/pkg/apirequest"
+	"minik8s/pkg/config/apiconfig"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/spf13/cobra"
+)
+
+var getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Display one or many resources",
+	Run:   getHandler,
+}
+
+func getHandler(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		fmt.Println("no args")
+		return
+	}
+	kind := args[0]
+
+	if kind == "pods" {
+		pods, err := apirequest.GetAllPods()
+		if err != nil {
+			fmt.Println("Error getting pods:", err)
+		}
+		PrintPodsTable(pods)
+		return
+	}
+	if kind == "nodes" {
+		nodes, err := apirequest.GetAllNodes()
+		if err != nil {
+			fmt.Println("Error getting nodes:", err)
+		}
+		PrintNodesTable(nodes)
+		return
+	}
+
+	var apiObject apiobj.ApiObject
+	switch kind {
+	case "Pod":
+		apiObject = &apiobj.Pod{}
+	case "Service":
+		apiObject = &apiobj.Service{}
+	case "ReplicaSet":
+		apiObject = &apiobj.ReplicaSet{}
+	case "Hpa":
+		apiObject = &apiobj.Hpa{}
+	case "Dns":
+		apiObject = &apiobj.Dns{}
+	}
+
+	getApiObject(args[1], apiObject)
+}
+
+func getApiObject(arg string, apiObject apiobj.ApiObject) {
+	namespace_obj := strings.Split(arg, "/")
+	namespace_name := namespace_obj[0]
+	obj_name := namespace_obj[1]
+
+	URL := apiconfig.Kind2URL[apiObject.GetKind()]
+	URL = strings.Replace(URL, ":namespace", namespace_name, -1)
+	URL = strings.Replace(URL, ":name", obj_name, -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+
+	fmt.Println("Get " + HttpUrl)
+
+	response, err := http.Get(HttpUrl)
+	if err != nil {
+		fmt.Printf("get %s error", apiObject.GetKind())
+		return
+	}
+	defer response.Body.Close()
+
+	var res map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&res)
+	if err != nil {
+		fmt.Printf("decode %s error\n", apiObject.GetKind())
+		return
+	}
+	data := res["data"].(string)
+
+	err = json.Unmarshal([]byte(data), apiObject)
+	if err != nil {
+		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())
+		return
+	}
+
+	podJson, err := json.MarshalIndent(apiObject, "", "    ")
+	if err != nil {
+		fmt.Printf("marshal %s error\n", apiObject.GetKind())
+		return
+	}
+	fmt.Println(string(podJson))
+}
+
+func PrintNodesTable(nodes []apiobj.Node) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Node Name", "ApiVersion", "Address"})
+
+	for _, node := range nodes {
+		t.AppendRow(table.Row{
+			node.MetaData.Name,
+			node.ApiVersion,
+			node.IP,
+		})
+	}
+	t.Render()
+}
+func PrintPodsTable(pods []apiobj.Pod) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Pod Name", "Namespace", "Containers"})
+
+	// 添加数据行
+	for _, pod := range pods {
+		containers := ""
+		for _, container := range pod.Spec.Containers {
+			containers += fmt.Sprintf("%s (%s)\n", container.Name, container.Image)
+		}
+		// 删除最后一个换行符
+		containers = strings.TrimSuffix(containers, "\n")
+
+		t.AppendRow([]interface{}{pod.MetaData.Name, pod.MetaData.Namespace, containers})
+	}
+
+	t.Render()
+}

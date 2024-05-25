@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Hpa
+metadata:
+  name: example-hpa
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: hpa-example
+  scaleTargetRef:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: hpa-pod
+  metrics:
+    cpu:
+      target: 0.5  # 目标值为 50% 的 CPU 利用率，转换为小数形式即为 0.5
+    mem:
+      target: 0.8  # 目标值为 80% 的内存利用率，转换为小数形式即为 0.8
+  minReplicas: 1
+  maxReplicas: 10
