@@ -159,7 +159,7 @@ func AddServiceIPVS(serviceSpec apiobj.ServiceSpec) {
 		}
 		for _, podIP := range podIPs {
 			// docker exec my-nginx-container ipvsadm -a -t
-			cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-a", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port), "-r", podIP+":"+fmt.Sprint(port.Port), "-g")
+			cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-a", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port), "-r", podIP+":"+fmt.Sprint(port.Port), "-m")
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				fmt.Printf("Error adding IPVS destination for pod %s on port %d: %v\nOutput: %s\n", podIP, port.Port, err, output)
@@ -179,12 +179,10 @@ func podMatchesService(pod *apiobj.Pod, serviceSpec *apiobj.ServiceSpec) bool {
 }
 
 func DeleteServiceIPVS(serviceSpec apiobj.ServiceSpec) {
-	for _, port := range serviceSpec.Ports {
-		// docker exec my-nginx-container ipvsadm -d -t
-		cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-d", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port))
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("Error deleting IPVS service on port %d: %v\nOutput: %s\n", port.Port, err, output)
-		}
+	// docker exec my-nginx-container ipvsadm -D -t <clusterIP>
+	cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-D", "-t", serviceSpec.ClusterIP)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error deleting IPVS service:", err, output)
 	}
 }
