@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"minik8s/pkg/etcd"
+	nginxmanager "minik8s/pkg/nginx/app"
 
 	"encoding/json"
 	"minik8s/pkg/apiobj"
@@ -46,6 +47,8 @@ func AddDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
+	// add server block
+	nginxmanager.AddServerBlock(dns.Spec.Host, dns.Spec.Paths)
 
 	dnsJson, err := json.Marshal(dns)
 	if err != nil {
@@ -77,7 +80,19 @@ func DeleteDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
-	err := etcd.EtcdKV.Delete(key)
+	// delete server block
+	var dns apiobj.Dns
+	dnsJson, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(500, gin.H{"delete": "fail"})
+	}
+	err = json.Unmarshal(dnsJson, &dns)
+	if err != nil {
+		c.JSON(500, gin.H{"delete": "fail"})
+	}
+	nginxmanager.DeleteServerBlock(dns.Spec.Host)
+
+	err = etcd.EtcdKV.Delete(key)
 	if err != nil {
 		c.JSON(500, gin.H{"delete": "fail"})
 	}

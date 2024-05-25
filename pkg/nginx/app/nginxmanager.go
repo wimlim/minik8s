@@ -31,20 +31,20 @@ func AddServerBlock(hostname string, paths []apiobj.Path) {
 	defer file.Close()
 
 	// write server block
-	file.WriteString("server {\n")
+	file.WriteString("\nserver {\n")
 	file.WriteString("    listen 80;\n")
 	_, err = file.WriteString("    server_name " + hostname + ";\n")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	_, err = file.WriteString("    location / {\n")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 	for _, path := range paths {
-		_, err = file.WriteString("        proxy_pass " + path.SubPath + ";\n")
+		_, err = file.WriteString("    location " + path.SubPath + " {\n")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		_, err = file.WriteString("        proxy_pass http://" + path.ServiceIp + ":" + fmt.Sprintf("%d", path.ServicePort) + "/;\n")
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -97,7 +97,7 @@ func DeleteServerBlock(hostname string) {
 	serverBlock := []string{}
 
 	for _, line := range lines {
-		trimLine := strings.TrimSpace(line)
+		trimLine := line
 		if trimLine == "server {" {
 			inServerBlock = true
 			serverBlock = []string{line}
