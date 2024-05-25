@@ -10,6 +10,7 @@ import (
 	im "minik8s/pkg/kubelet/app/runtime/image"
 	"minik8s/pkg/minik8sTypes"
 	"os"
+	"os/exec"
 
 	"path/filepath"
 
@@ -67,12 +68,20 @@ func (r *Registry) PullImage(imageRef string) {
 }
 
 func (r *Registry) PushImage(imageRef string) {
-	cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		fmt.Println("Failed to create Docker client:", err)
+		return
+	}
 
-	info, _ := cli.ImagePush(context.Background(), imageRef, image.PushOptions{
+	info, err := cli.ImagePush(context.Background(), imageRef, image.PushOptions{
 		RegistryAuth: "auth",
 		All:          false,
 	})
+	if err != nil {
+		fmt.Println("Failed to push image:", err)
+		return
+	}
 
 	defer info.Close()
 	io.Copy(os.Stdout, info)
@@ -84,6 +93,7 @@ func (r *Registry) BuildImage(f apiobj.Function) {
 	if err != nil {
 		fmt.Println("Getwd error:", err)
 	}
+	fmt.Println("curpath:", curpath)
 	err = os.Mkdir(f.MetaData.UID, 0777)
 	if err != nil {
 		fmt.Println("Mkdir error:", err)
@@ -98,13 +108,30 @@ func (r *Registry) BuildImage(f apiobj.Function) {
 		fmt.Println("Write error:", err)
 	}
 
-	Dockerfile, err := os.Create(filepath.Join(curpath, f.MetaData.UID, "Dockerfile"))
+	dockerfilePath := filepath.Join(curpath, f.MetaData.UID, "Dockerfile")
+	Dockerfile, err := os.Create(dockerfilePath)
 	if err != nil {
 		fmt.Println("Create dockerfile error:", err)
 	}
 	Dockerfile.WriteString("FROM server_base:latest\n")
 	Dockerfile.WriteString("COPY func.py /app/\n")
-
 	Dockerfile.Close()
 
+	imageName := fmt.Sprintf("func/%s:latest", f.MetaData.UID)
+	imageRef := fmt.Sprintf("%s/%s", serverlessconfig.GetRegistryServerUrl(), imageName)
+
+	cmd := exec.Command("docker", "build", "-t", imageRef, "-f", dockerfilePath, filepath.Join(curpath, f.MetaData.UID))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println("docker build error:", err)
+	}
+
+	r.PushImage(imageRef)
+
+	err = os.RemoveAll(filepath.Join(curpath, f.MetaData.UID))
+	if err != nil {
+		fmt.Println("RemoveAll error:", err)
+	}
 }

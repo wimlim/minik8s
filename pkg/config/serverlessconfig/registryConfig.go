@@ -15,5 +15,5 @@ const (
 func GetRegistryServerUrl() string {
 
 	RegistryServerIp := GetMasterIP()
-	return fmt.Sprintf("http://%s:%d", RegistryServerIp, RegistryServerPort)
+	return fmt.Sprintf("%s:%d", RegistryServerIp, RegistryServerPort)
 }
