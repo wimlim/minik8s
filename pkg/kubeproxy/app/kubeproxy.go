@@ -26,10 +26,12 @@ func NewKubeProxy() *KubeProxy {
 		return nil
 	}
 	subscriber := message.NewSubscriber()
+	dnsbuscriber := message.NewSubscriber()
 
 	return &KubeProxy{
-		ipvsManager: ipvsManager,
-		subscriber:  subscriber,
+		ipvsManager:   ipvsManager,
+		subscriber:    subscriber,
+		dnsSubscriber: dnsbuscriber,
 	}
 }
 
@@ -90,7 +92,7 @@ func (kp *KubeProxy) handleDNSAdd(msg message.Message) {
 	nginxip := msg.Content
 	file := "/etc/hosts"
 	// open hosts file
-	f, err := os.OpenFile(file, os.O_RDWR, 0644)
+	f, err := os.OpenFile(file, os.O_APPEND|os.O_RDWR, 0644)
 	if err != nil {
 		fmt.Println("Failed to open hosts file:", err)
 		return
@@ -105,6 +107,7 @@ func (kp *KubeProxy) handleDNSAdd(msg message.Message) {
 }
 
 func (kp *KubeProxy) handleDNSDelete(msg message.Message) {
+	fmt.Println("handleDNSDelete" + msg.Name)
 	hostname := msg.Name
 	file := "/etc/hosts"
 	// open hosts file
@@ -136,38 +139,43 @@ func (kp *KubeProxy) Run() {
 	defer kp.ipvsManager.Close()
 	defer kp.dnsSubscriber.Close()
 
-	kp.subscriber.Subscribe(message.ServiceQueue, func(d amqp.Delivery) {
-		var msg message.Message
-		err := json.Unmarshal(d.Body, &msg)
-		if err != nil {
-			fmt.Println("unmarshal message error:", err)
-			return
-		}
+	go func() {
+		kp.subscriber.Subscribe(message.ServiceQueue, func(d amqp.Delivery) {
+			var msg message.Message
+			err := json.Unmarshal(d.Body, &msg)
+			if err != nil {
+				fmt.Println("unmarshal message error:", err)
+				return
+			}
 
-		switch msg.Type {
-		case "Add":
-			kp.handleServiceAdd(msg)
-		case "Delete":
-			kp.handleServiceDelete(msg)
-		case "Update":
-			kp.handleServiceUpdate(msg)
-		}
-	})
+			switch msg.Type {
+			case "Add":
+				kp.handleServiceAdd(msg)
+			case "Delete":
+				kp.handleServiceDelete(msg)
+			case "Update":
+				kp.handleServiceUpdate(msg)
+			}
+		})
+	}()
 
-	kp.dnsSubscriber.Subscribe(message.DnsQueue, func(d amqp.Delivery) {
-		fmt.Println("handle dns message")
-		var msg message.Message
-		err := json.Unmarshal(d.Body, &msg)
-		if err != nil {
-			fmt.Println("unmarshal message error:", err)
-			return
-		}
+	go func() {
+		kp.dnsSubscriber.Subscribe(message.DnsQueue, func(d amqp.Delivery) {
+			var msg message.Message
+			err := json.Unmarshal(d.Body, &msg)
+			if err != nil {
+				fmt.Println("unmarshal message error:", err)
+				return
+			}
 
-		switch msg.Type {
-		case "Add":
-			kp.handleDNSAdd(msg)
-		case "Delete":
-			kp.handleDNSDelete(msg)
-		}
-	})
+			switch msg.Type {
+			case "Add":
+				kp.handleDNSAdd(msg)
+			case "Delete":
+				kp.handleDNSDelete(msg)
+			}
+		})
+	}()
+
+	select {}
 }

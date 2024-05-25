@@ -72,7 +72,6 @@ func AddDns(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	fmt.Println("publish dns message")
 	p.Publish(message.DnsQueue, msgJson)
 }
 
@@ -98,6 +97,17 @@ func DeleteDns(c *gin.Context) {
 		c.JSON(500, gin.H{"delete": "fail"})
 	}
 	c.JSON(200, gin.H{"delete": "success"})
+
+	msg := message.Message{
+		Type:    "Delete",
+		URL:     key,
+		Name:    dns.Spec.Host,
+		Content: "",
+	}
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.DnsQueue, msgJson)
 }
 
 func UpdateDns(c *gin.Context) {
