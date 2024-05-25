@@ -32,7 +32,7 @@ func SetServer(s *server) *server {
 }
 
 func (s *server) StartDnsNginx() {
-	cmd := exec.Command("docker", "run", "-d", "--name", "my-nginx-container", "-p", "80:80", "-v", "/root/minik8s/pkg/nginx:/etc/nginx/conf.d", "nginx")
+	cmd := exec.Command("docker", "run", "-d", "--privileged", "--name", "my-nginx-container", "-p", "80:80", "-v", "/root/minik8s/pkg/nginx:/etc/nginx/conf.d", "nginx")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println("Error executing command:", err)
@@ -45,6 +45,19 @@ func (s *server) StartDnsNginx() {
 	}
 	etcd.EtcdKV.Put(etcd.PATH_EtcdDnsNginxIP, []byte(ip))
 	fmt.Println(ip)
+
+	updateCmd := exec.Command("docker", "exec", "my-nginx-container", "apt", "update")
+	_, err = updateCmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return
+	}
+	installCmd := exec.Command("docker", "exec", "my-nginx-container", "apt", "install", "-y", "ipvsadm")
+	_, err = installCmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return
+	}
 }
 
 func (s *server) Bind() {
