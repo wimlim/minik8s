@@ -45,7 +45,7 @@ func AddWorkflow(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdWorkflows+"/%s/%s", namespace, name)
 
-	workflow.MetaData.UID = uuid.New().String()
+	workflow.MetaData.UID = uuid.New().String()[:16]
 
 	workflowJson, err := json.Marshal(workflow)
 	if err != nil {
@@ -95,4 +95,33 @@ func GetWorkflow(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"data": string(res),
 	})
+}
+
+func UpdateWorkflowStatus(c *gin.Context) {
+	fmt.Println("updateWorkflowStatus")
+	var workflowStatus apiobj.WorkflowStatus
+	c.ShouldBind(&workflowStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	key := fmt.Sprintf(etcd.PATH_EtcdWorkflows+"/%s/%s", namespace, name)
+
+	res , err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(500, gin.H{"update": "fail"})
+	}
+
+	var workflow apiobj.Workflow
+	err = json.Unmarshal([]byte(res), &workflow)
+	if err != nil {
+		c.JSON(500, gin.H{"update": "fail"})
+	}
+
+	workflow.Status = workflowStatus
+	workflowJson, err := json.Marshal(workflow)
+	if err != nil {
+		c.JSON(500, gin.H{"update": "fail"})
+	}
+
+	etcd.EtcdKV.Put(key, workflowJson)
+	c.JSON(200, gin.H{"update": string(workflowJson)})
 }

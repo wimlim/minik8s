@@ -126,3 +126,25 @@ func GetDnsStatus(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{"data": string(res)})
 }
+
+func UpdateDnsStatus(c *gin.Context) {
+	fmt.Println("updateDnsStatus")
+	
+	var dnsStatus apiobj.DnsStatus
+	c.ShouldBind(&dnsStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(500, gin.H{"get": "fail"})
+	}
+	var dns apiobj.Dns
+	json.Unmarshal([]byte(res), &dns)
+	dns.Status = dnsStatus
+	
+	dnsJson, _ := json.Marshal(dns)
+	etcd.EtcdKV.Put(key, dnsJson)
+	c.JSON(200, gin.H{"update": string(dnsJson)})
+}

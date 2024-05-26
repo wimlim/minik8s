@@ -40,6 +40,7 @@ const (
 	URL_GlobalWorkflows = "/api/v1/workflows"
 	URL_AllWorkflows    = "/api/v1/namespaces/:namespace/workflows"
 	URL_Workflow        = "/api/v1/namespaces/:namespace/workflows/:name"
+	URL_WorkflowStatus  = "/api/v1/namespaces/:namespace/workflows/:name/status"
 )
 
 var Kind2URL = map[string]string{

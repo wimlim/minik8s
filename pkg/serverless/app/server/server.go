@@ -3,8 +3,10 @@ package server
 import (
 	"fmt"
 
+	"encoding/json"
 	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/serverlessconfig"
+	"minik8s/pkg/serverless/app/autoscaler"
 	"minik8s/tools/runner"
 	"net/http"
 	"time"
@@ -40,6 +42,7 @@ func (s *server) Bind() {
 func (s *server) Run() {
 
 	go runner.NewRunner().RunLoop(5*time.Second, 5*time.Second, s.FuncPodMapUpdateRoutine)
+	go autoscaler.NewFuncScaler().Run()
 	s.Bind()
 	s.router.Run(fmt.Sprintf("%s:%d", s.ip, s.port))
 }
@@ -79,6 +82,14 @@ func (s *server) FunctionTrigger(c *gin.Context) {
 	}
 
 	defer resp.Body.Close()
+	var res map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&res)
+	if err != nil {
+		fmt.Printf("decode res error\n")
+		return
+	}
+
+	c.JSON(http.StatusOK, res["result"].(float64))
 }
 
 func (s *server) FunctionCheck(c *gin.Context) {

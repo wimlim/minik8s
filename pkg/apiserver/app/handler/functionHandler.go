@@ -45,7 +45,7 @@ func AddFunction(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdFunctions+"/%s/%s", namespace, name)
 
-	function.MetaData.UID = uuid.New().String()
+	function.MetaData.UID = uuid.New().String()[:16]
 
 	functionJson, err := json.Marshal(function)
 	if err != nil {
