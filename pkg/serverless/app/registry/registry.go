@@ -117,7 +117,7 @@ func (r *Registry) BuildImage(f apiobj.Function) {
 	Dockerfile.WriteString("COPY func.py /app/\n")
 	Dockerfile.Close()
 
-	imageName := fmt.Sprintf("func/%s:latest", f.MetaData.UID)
+	imageName := fmt.Sprintf("func/%s:latest", f.MetaData.Name)
 	imageRef := fmt.Sprintf("%s/%s", serverlessconfig.GetRegistryServerUrl(), imageName)
 
 	cmd := exec.Command("docker", "build", "-t", imageRef, "-f", dockerfilePath, filepath.Join(curpath, f.MetaData.UID))
