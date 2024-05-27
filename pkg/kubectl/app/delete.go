@@ -61,6 +61,10 @@ func deleteHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.Function{}
 	case "Workflow":
 		apiObject = &apiobj.Workflow{}
+	case "PV":
+		apiObject = &apiobj.PV{}
+	case "PVC":
+		apiObject = &apiobj.PVC{}
 	}
 
 	deleteApiObject(content, apiObject)

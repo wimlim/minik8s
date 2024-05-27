@@ -14,9 +14,14 @@ const (
 	PodPhase_Unknown   = "Unknown"
 )
 
+type PersistentVolumeClaim struct {
+	ClaimName string `yaml:"claimName" json:"claimName"`
+}
+
 type VolumeMount struct {
-	Name      string `yaml:"name" json:"name"`
-	MountPath string `yaml:"mountPath" json:"mountPath"`
+	Name                  string                `yaml:"name" json:"name"`
+	MountPath             string                `yaml:"mountPath" json:"mountPath"`
+	PersistentVolumeClaim PersistentVolumeClaim `yaml:"persistentVolumeClaim" json:"persistentVolumeClaim"`
 }
 type Resource struct {
 	CPU    float64 `yaml:"cpu" json:"cpu"`

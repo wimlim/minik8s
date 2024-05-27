@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PV
+metadata:
+  name: my-pv
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+  storageClassName: standard
+  nfs:
+    path: /path/to/nfs
