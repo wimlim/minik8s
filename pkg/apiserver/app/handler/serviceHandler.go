@@ -7,6 +7,7 @@ import (
 	"minik8s/pkg/config/serviceconfig"
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
+	nginxmanager "minik8s/pkg/nginx/app"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -63,14 +64,16 @@ func AddService(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, name)
 
-	service.MetaData.UID = uuid.New().String()
+	service.MetaData.UID = uuid.New().String()[:16]
 
 	if service.Spec.Type == "ClusterIP" {
 		service.Spec.ClusterIP = serviceconfig.AllocateIp()
-	}else if service.Spec.Type == "NodePort" {
+	} else if service.Spec.Type == "NodePort" {
 		service.Spec.ClusterIP = "0.0.0.0"
 	}
 
+	// update nginx config
+	nginxmanager.AddServiceIPVS(service.Spec)
 	serviceJson, err := json.Marshal(service)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
@@ -130,6 +133,8 @@ func DeleteService(c *gin.Context) {
 	json.Unmarshal([]byte(res), &service)
 	serviceIp := service.Spec.ClusterIP
 	serviceconfig.ReleaseIp(serviceIp)
+	// update nginx config
+	nginxmanager.DeleteServiceIPVS(service.Spec)
 
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
@@ -166,4 +171,29 @@ func GetServiceStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": string(statusJson),
 	})
+}
+
+func UpdateServiceStatus(c *gin.Context) {
+	// update service status
+	var status apiobj.ServiceStatus
+	c.ShouldBind(&status)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, name)
+
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
+	}
+	var service apiobj.Service
+	json.Unmarshal([]byte(res), &service)
+	service.Status = status
+
+	serviceJson, err := json.Marshal(service)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
+	}
+	
+	etcd.EtcdKV.Put(key, serviceJson)
+	c.JSON(http.StatusOK, gin.H{"update": string(serviceJson)})
 }

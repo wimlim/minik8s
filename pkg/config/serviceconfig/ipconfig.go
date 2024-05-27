@@ -1,19 +1,20 @@
 package serviceconfig
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"minik8s/pkg/etcd"
 )
 
 const (
-	BaseIp = "192.168.1."
+	BaseIp = "3.3.3."
 )
 
 type IpAllocator struct {
 	IpPool map[string]bool `json:"ipPool"`
 }
-func NewIpAllocator(){
+
+func NewIpAllocator() {
 	ipAllocator := &IpAllocator{
 		IpPool: make(map[string]bool),
 	}
@@ -26,8 +27,8 @@ func NewIpAllocator(){
 	}
 	etcd.EtcdKV.Put(etcd.PATH_EtcdServieIps, ipAllocatorJson)
 }
-	
-func  AllocateIp() string {
+
+func AllocateIp() string {
 	ipAllocator := &IpAllocator{}
 	key := etcd.PATH_EtcdServieIps
 	ipAllocatorJson, err := etcd.EtcdKV.Get(key)

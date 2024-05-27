@@ -151,9 +151,9 @@ func (hc *HpaController) HpaAddPod(podTemplate apiobj.Pod, num int, hpaMeta apio
 	url := apiconfig.URL_Pod
 	url = apiconfig.GetApiServerUrl() + url
 	for i := 0; i < num; i++ {
-		pod.MetaData.Name = oldPodName + "-" + uuid.New().String()
+		pod.MetaData.Name = oldPodName + "-" + uuid.New().String()[:16]
 		for id := range oldContainerName {
-			pod.Spec.Containers[id].Name = oldContainerName[id] + "-" + uuid.New().String()
+			pod.Spec.Containers[id].Name = oldContainerName[id] + "-" + uuid.New().String()[:16]
 		}
 
 		if pod.MetaData.Namespace == "" {

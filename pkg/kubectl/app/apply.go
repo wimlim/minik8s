@@ -60,6 +60,11 @@ func applyHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.Hpa{}
 	case "Dns":
 		apiObject = &apiobj.Dns{}
+	case "Function":
+		applyFunction(content)
+		return
+	case "Workflow":
+		apiObject = &apiobj.Workflow{}
 	}
 
 	applyApiObject(content, apiObject)
@@ -97,4 +102,51 @@ func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
 	}
 	defer response.Body.Close()
 	fmt.Printf("apply %s request sent\n", apiObject.GetKind())
+}
+
+func applyFunction(content []byte) {
+	var function apiobj.Function
+	err := yaml.Unmarshal(content, &function)
+	if err != nil {
+		fmt.Println("unmarshal function error")
+		return
+	}
+	if function.GetNamespace() == "" {
+		function.SetNamespace("default")
+	}
+
+	filepath := function.Spec.Path
+	fd, err := os.Open(filepath)
+	if err != nil {
+		fmt.Println("open function file error")
+		return
+	}
+	defer fd.Close()
+
+	content, err = io.ReadAll(fd)
+	if err != nil {
+		fmt.Println("read function file error")
+		return
+	}
+
+	function.Spec.Content = content
+	fmt.Println(string(content))
+
+	URL := apiconfig.URL_Function
+	URL = strings.Replace(URL, ":namespace", function.GetNamespace(), -1)
+	URL = strings.Replace(URL, ":name", function.GetName(), -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+	fmt.Println("Post " + HttpUrl)
+	jsonData, err := json.Marshal(function)
+	if err != nil {
+		fmt.Println("marshal function error")
+		return
+	}
+	response, err := http.Post(HttpUrl, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("post error")
+		return
+	}
+	defer response.Body.Close()
+	fmt.Println("apply function request sent")
 }

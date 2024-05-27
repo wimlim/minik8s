@@ -23,10 +23,12 @@ const (
 	ScheduleQueue = "scheduleQueue"
 	PodQueue      = "podQueue"
 	ServiceQueue  = "serviceQueue"
+	DnsQueue      = "dnsQueue"
 )
 
 var Queue2Exchange = map[string]string{
 	ScheduleQueue: "minik8s",
 	PodQueue:      "minik8s",
 	ServiceQueue:  "minik8s",
+	DnsQueue:      "minik8s",
 }

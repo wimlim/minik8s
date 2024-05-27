@@ -32,6 +32,15 @@ const (
 	URL_AllDns    = "/api/v1/namespaces/:namespace/dns"
 	URL_Dns       = "/api/v1/namespaces/:namespace/dns/:name"
 	URL_DnsStatus = "/api/v1/namespaces/:namespace/dns/:name/status"
+
+	URL_GlobalFunctions = "/api/v1/functions"
+	URL_AllFunctions    = "/api/v1/namespaces/:namespace/functions"
+	URL_Function        = "/api/v1/namespaces/:namespace/functions/:name"
+
+	URL_GlobalWorkflows = "/api/v1/workflows"
+	URL_AllWorkflows    = "/api/v1/namespaces/:namespace/workflows"
+	URL_Workflow        = "/api/v1/namespaces/:namespace/workflows/:name"
+	URL_WorkflowStatus  = "/api/v1/namespaces/:namespace/workflows/:name/status"
 )
 
 var Kind2URL = map[string]string{
@@ -41,5 +50,7 @@ var Kind2URL = map[string]string{
 	"ReplicaSet": URL_ReplicaSet,
 	"Hpa":        URL_Hpa,
 	"Dns":        URL_Dns,
+	"Function":   URL_Function,
+	"Workflow":   URL_Workflow,
 }
 	

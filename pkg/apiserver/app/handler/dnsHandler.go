@@ -3,9 +3,11 @@ package handler
 import (
 	"fmt"
 	"minik8s/pkg/etcd"
+	nginxmanager "minik8s/pkg/nginx/app"
 
 	"encoding/json"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/message"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,6 +47,8 @@ func AddDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
+	// add server block
+	nginxmanager.AddServerBlock(dns.Spec.Host, dns.Spec.Paths)
 
 	dnsJson, err := json.Marshal(dns)
 	if err != nil {
@@ -52,6 +56,23 @@ func AddDns(c *gin.Context) {
 	}
 	etcd.EtcdKV.Put(key, dnsJson)
 	c.JSON(200, gin.H{"add": string(dnsJson)})
+
+	res, err := etcd.EtcdKV.Get(etcd.PATH_EtcdDnsNginxIP)
+	if err != nil {
+		fmt.Println("get etcd error")
+	}
+	nginxIp := string(res)
+	msg := message.Message{
+		Type:    "Add",
+		URL:     key,
+		Name:    dns.Spec.Host,
+		Content: nginxIp,
+	}
+
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.DnsQueue, msgJson)
 }
 
 func DeleteDns(c *gin.Context) {
@@ -59,11 +80,34 @@ func DeleteDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
-	err := etcd.EtcdKV.Delete(key)
+	// delete server block
+	var dns apiobj.Dns
+	dnsJson, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(500, gin.H{"delete": "fail"})
+	}
+	err = json.Unmarshal(dnsJson, &dns)
+	if err != nil {
+		c.JSON(500, gin.H{"delete": "fail"})
+	}
+	nginxmanager.DeleteServerBlock(dns.Spec.Host)
+
+	err = etcd.EtcdKV.Delete(key)
 	if err != nil {
 		c.JSON(500, gin.H{"delete": "fail"})
 	}
 	c.JSON(200, gin.H{"delete": "success"})
+
+	msg := message.Message{
+		Type:    "Delete",
+		URL:     key,
+		Name:    dns.Spec.Host,
+		Content: "",
+	}
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+	p.Publish(message.DnsQueue, msgJson)
 }
 
 func UpdateDns(c *gin.Context) {
@@ -73,7 +117,7 @@ func UpdateDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
-	
+
 	dnsJson, err := json.Marshal(dns)
 	if err != nil {
 		c.JSON(500, gin.H{"update": "fail"})
@@ -107,4 +151,26 @@ func GetDnsStatus(c *gin.Context) {
 		c.JSON(500, gin.H{"get": "fail"})
 	}
 	c.JSON(200, gin.H{"data": string(res)})
+}
+
+func UpdateDnsStatus(c *gin.Context) {
+	fmt.Println("updateDnsStatus")
+	
+	var dnsStatus apiobj.DnsStatus
+	c.ShouldBind(&dnsStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(500, gin.H{"get": "fail"})
+	}
+	var dns apiobj.Dns
+	json.Unmarshal([]byte(res), &dns)
+	dns.Status = dnsStatus
+	
+	dnsJson, _ := json.Marshal(dns)
+	etcd.EtcdKV.Put(key, dnsJson)
+	c.JSON(200, gin.H{"update": string(dnsJson)})
 }

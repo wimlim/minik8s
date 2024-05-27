@@ -48,7 +48,7 @@ func AddPod(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
-	pod.MetaData.UID = uuid.New().String()
+	pod.MetaData.UID = uuid.New().String()[:16]
 
 	podJson, err := json.Marshal(pod)
 	if err != nil {
@@ -146,4 +146,27 @@ func GetPodStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": string(statusJson),
 	})
+}
+
+func UpdatePodStatus(c *gin.Context) {
+	fmt.Println("updatePodStatus")
+
+	var podStatus apiobj.PodStatus
+	c.ShouldBind(&podStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
+	
+	var pod apiobj.Pod
+	json.Unmarshal([]byte(res), &pod)
+	pod.Status = podStatus
+
+	podJson, _ := json.Marshal(pod)
+	etcd.EtcdKV.Put(key, podJson)
+	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
 }
