@@ -11,25 +11,29 @@ import (
 	"github.com/docker/docker/api/types"
 )
 
-func GetAllPodStatus() (*map[string]*apiobj.PodStatus, error) {
+func GetAllPodStatus() (*map[minik8sTypes.PodIdentifier]*apiobj.PodStatus, error) {
 	containers, err := container.ListAllContainer()
 	if err != nil {
 		return nil, err
 	}
-	mapPodId2ContainerIds := map[string][]string{}
-	mapPodId2PodStatus := map[string]*apiobj.PodStatus{}
+	mapPodId2ContainerIds := map[minik8sTypes.PodIdentifier][]string{}
+	mapPodId2PodStatus := map[minik8sTypes.PodIdentifier]*apiobj.PodStatus{}
 	for _, ctn := range containers {
 		if ctn.Labels[minik8sTypes.Container_Label_PodUid] == "" ||
 			ctn.Labels[minik8sTypes.Container_Label_PodName] == "" ||
 			ctn.Labels[minik8sTypes.Container_Label_PodNamespace] == "" {
 			continue
 		}
-		podId := ctn.Labels[minik8sTypes.Container_Label_PodUid]
-		mapPodId2ContainerIds[podId] = append(mapPodId2ContainerIds[podId], ctn.ID)
+		podIdentifier := minik8sTypes.PodIdentifier{
+			PodId:        ctn.Labels[minik8sTypes.Container_Label_PodUid],
+			PodName:      ctn.Labels[minik8sTypes.Container_Label_PodName],
+			PodNamespace: ctn.Labels[minik8sTypes.Container_Label_PodNamespace],
+		}
+		mapPodId2ContainerIds[podIdentifier] = append(mapPodId2ContainerIds[podIdentifier], ctn.ID)
 	}
 
-	for podId, containerIds := range mapPodId2ContainerIds {
-		mapPodId2PodStatus[podId], err = getPodStatus(podId, &containerIds)
+	for podIdentifier, containerIds := range mapPodId2ContainerIds {
+		mapPodId2PodStatus[podIdentifier], err = getPodStatus(podIdentifier.PodId, &containerIds)
 		if err != nil {
 			return nil, err
 		}
