@@ -47,6 +47,7 @@ func TestFindAvailablePort(t *testing.T) {
 func TestGetPodFromYaml(t *testing.T) {
 	pod, _ := getPodFromYaml("pod1.yaml")
 	fmt.Printf("Pod 名称: %s\n", pod.MetaData.Name)
+	fmt.Printf("Pod HostPath: %s\n", pod.Spec.Volumes[0].HostPath)
 	fmt.Println("容器信息:")
 	for _, container := range pod.Spec.Containers {
 		fmt.Printf("- 名称: %s, 镜像: %s\n", container.Name, container.Image)

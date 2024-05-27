@@ -3,12 +3,13 @@ package nginxmanager
 import (
 	"fmt"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/apirequest"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-var configPath = "/root/minik8s/nginx/default.conf"
+var configPath = "/root/minik8s/pkg/nginx/default.conf"
 
 func reloadNginx() {
 	cmd := exec.Command("docker", "exec", "my-nginx-container", "nginx", "-s", "reload")
@@ -30,28 +31,20 @@ func AddServerBlock(hostname string, paths []apiobj.Path) {
 	defer file.Close()
 
 	// write server block
-	_, err = file.WriteString("server {\n")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	_, err = file.WriteString("    listen 80;\n")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	file.WriteString("\nserver {\n")
+	file.WriteString("    listen 80;\n")
 	_, err = file.WriteString("    server_name " + hostname + ";\n")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	_, err = file.WriteString("    location / {\n")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 	for _, path := range paths {
-		_, err = file.WriteString("        proxy_pass " + path.SubPath + ";\n")
+		_, err = file.WriteString("    location " + path.SubPath + " {\n")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		_, err = file.WriteString("        proxy_pass http://" + path.ServiceIp + ":" + fmt.Sprintf("%d", path.ServicePort) + "/;\n")
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -76,6 +69,16 @@ func AddServerBlock(hostname string, paths []apiobj.Path) {
 			fmt.Println(err)
 			return
 		}
+		_, err = file.WriteString("    }\n")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+	_, err = file.WriteString("}\n")
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 	reloadNginx()
 }
@@ -94,7 +97,7 @@ func DeleteServerBlock(hostname string) {
 	serverBlock := []string{}
 
 	for _, line := range lines {
-		trimLine := strings.TrimSpace(line)
+		trimLine := line
 		if trimLine == "server {" {
 			inServerBlock = true
 			serverBlock = []string{line}
@@ -129,4 +132,59 @@ func containsServerName(block []string, serverName string) bool {
 		}
 	}
 	return false
+}
+
+func AddServiceIPVS(serviceSpec apiobj.ServiceSpec) {
+	pods, err := apirequest.GetAllPods()
+	if err != nil {
+		fmt.Println("Failed to get all pods:", err)
+		return
+	}
+	for _, port := range serviceSpec.Ports {
+		var podIPs []string
+		for _, pod := range pods {
+			if podMatchesService(&pod, &serviceSpec) {
+				podIPs = append(podIPs, pod.Status.PodIP)
+			}
+		}
+		if len(podIPs) == 0 {
+			fmt.Println("No pods match service selector")
+			return
+		}
+		// docker exec my-nginx-container ipvsadm -A -t
+		cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-A", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port), "-s", "rr")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			fmt.Println("Error adding IPVS service:", err, output)
+		}
+		for _, podIP := range podIPs {
+			// docker exec my-nginx-container ipvsadm -a -t
+			cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-a", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port), "-r", podIP+":"+fmt.Sprint(port.Port), "-g")
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				fmt.Printf("Error adding IPVS destination for pod %s on port %d: %v\nOutput: %s\n", podIP, port.Port, err, output)
+			}
+		}
+	}
+}
+
+func podMatchesService(pod *apiobj.Pod, serviceSpec *apiobj.ServiceSpec) bool {
+	labels := pod.MetaData.Labels
+	for key, value := range serviceSpec.Selector {
+		if currentValue, ok := labels[key]; !ok || currentValue != value {
+			return false
+		}
+	}
+	return true
+}
+
+func DeleteServiceIPVS(serviceSpec apiobj.ServiceSpec) {
+	for _, port := range serviceSpec.Ports {
+		// docker exec my-nginx-container ipvsadm -d -t
+		cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-d", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port))
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			fmt.Printf("Error deleting IPVS service on port %d: %v\nOutput: %s\n", port.Port, err, output)
+		}
+	}
 }

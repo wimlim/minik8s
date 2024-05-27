@@ -7,7 +7,7 @@ import (
 	"minik8s/pkg/config/serviceconfig"
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
-	"minik8s/tools/weave"
+	nginxmanager "minik8s/pkg/nginx/app"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -68,15 +68,12 @@ func AddService(c *gin.Context) {
 
 	if service.Spec.Type == "ClusterIP" {
 		service.Spec.ClusterIP = serviceconfig.AllocateIp()
-	}else if service.Spec.Type == "NodePort" {
+	} else if service.Spec.Type == "NodePort" {
 		service.Spec.ClusterIP = "0.0.0.0"
 	}
 
-	err := weave.WeaveExpose(service.Spec.ClusterIP)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
-	}
-
+	// update nginx config
+	nginxmanager.AddServiceIPVS(service.Spec)
 	serviceJson, err := json.Marshal(service)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
@@ -136,6 +133,8 @@ func DeleteService(c *gin.Context) {
 	json.Unmarshal([]byte(res), &service)
 	serviceIp := service.Spec.ClusterIP
 	serviceconfig.ReleaseIp(serviceIp)
+	// update nginx config
+	nginxmanager.DeleteServiceIPVS(service.Spec)
 
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
