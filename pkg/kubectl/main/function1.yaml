@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Function
+metadata:
+  name: example-function
+  namespace: default
+spec:
+  path: python/func1.py

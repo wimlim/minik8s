@@ -46,7 +46,7 @@ func AddHpa(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdHpas+"/%s/%s", namespace, name)
 
-	hpa.MetaData.UID = uuid.New().String()
+	hpa.MetaData.UID = uuid.New().String()[:16]
 
 	hpaJson, err := json.Marshal(hpa)
 	if err != nil {
@@ -111,4 +111,33 @@ func GetHpaStatus(c *gin.Context) {
 		c.JSON(500, gin.H{"get": "fail"})
 	}
 	c.JSON(200, gin.H{"data": string(res)})
+}
+
+func UpdateHpaStatus(c *gin.Context) {
+	fmt.Println("updateHpaStatus")
+	var hpaStatus apiobj.HpaStatus
+	c.ShouldBind(&hpaStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	key := fmt.Sprintf(etcd.PATH_EtcdHpas+"/%s/%s", namespace, name)
+
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(500, gin.H{"update": "fail"})
+	}
+
+	var hpa apiobj.Hpa
+	json.Unmarshal(res, &hpa)
+	hpa.Status = hpaStatus
+
+	hpaJson, err := json.Marshal(hpa)
+	if err != nil {
+		c.JSON(500, gin.H{"update": "fail"})
+	}
+
+	etcd.EtcdKV.Put(key, hpaJson)
+	if err != nil {
+		c.JSON(500, gin.H{"update": "fail"})
+	}
+	c.JSON(200, gin.H{"update": "success"})
 }

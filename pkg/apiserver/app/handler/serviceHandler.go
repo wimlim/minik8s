@@ -64,7 +64,7 @@ func AddService(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, name)
 
-	service.MetaData.UID = uuid.New().String()
+	service.MetaData.UID = uuid.New().String()[:16]
 
 	if service.Spec.Type == "ClusterIP" {
 		service.Spec.ClusterIP = serviceconfig.AllocateIp()
@@ -171,4 +171,29 @@ func GetServiceStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": string(statusJson),
 	})
+}
+
+func UpdateServiceStatus(c *gin.Context) {
+	// update service status
+	var status apiobj.ServiceStatus
+	c.ShouldBind(&status)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, name)
+
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
+	}
+	var service apiobj.Service
+	json.Unmarshal([]byte(res), &service)
+	service.Status = status
+
+	serviceJson, err := json.Marshal(service)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
+	}
+	
+	etcd.EtcdKV.Put(key, serviceJson)
+	c.JSON(http.StatusOK, gin.H{"update": string(serviceJson)})
 }
