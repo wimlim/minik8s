@@ -64,7 +64,7 @@ func (fs *funcScaler) Addfunc(f apiobj.Function) {
 
 	r.BuildImage(f)
 
-	imageName := fmt.Sprintf("func/%s:latest", f.MetaData.UID)
+	imageName := fmt.Sprintf("func/%s:latest", f.MetaData.Name)
 	imageRef := fmt.Sprintf("%s/%s", serverlessconfig.GetRegistryServerUrl(), imageName)
 
 	replica := &apiobj.ReplicaSet{
