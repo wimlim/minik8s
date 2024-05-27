@@ -1,58 +1,52 @@
 package jobserver
 
-
+import (
+	"encoding/json"
 	"fmt"
-	"io/ioutil`"
-	"log"
-	"net"
+	"minik8s/pkg/apiobj"
+	"minik8s/pkg/config/jobserverconfig"
+	"minik8s/pkg/message"
 
+	"github.com/streadway/amqp"
 	"golang.org/x/crypto/ssh"
 )
 
-func 
+func addJob(job apiobj.Job) {
 
-func main() {
-	// 读取私钥
-	key, err := ioutil.ReadFile("path/to/private/key")
-	if err != nil {
-		log.Fatalf("unable to read private key: %v", err)
-	}
+}
 
-	// 解析私钥
-	signer, err := ssh.ParsePrivateKey(key)
-	if err != nil {
-		log.Fatalf("unable to parse private key: %v", err)
-	}
+func deleteJob(job apiobj.Job) {
 
-	// 创建SSH客户端配置
-	config := &ssh.ClientConfig{
-		User: "username",
+}
+
+func Run() {
+	sshConfig := &ssh.ClientConfig{
+		User: jobserverconfig.Username,
 		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
+			ssh.Password(jobserverconfig.Password),
 		},
-		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-			return nil
-		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-
-	// 连接到SSH服务器
-	client, err := ssh.Dial("tcp", "hostname:22", config)
+	sshClient, err := ssh.Dial("tcp", jobserverconfig.HttpUrl, sshConfig)
 	if err != nil {
-		log.Fatalf("failed to dial: %v", err)
+		fmt.Println("Failed to dial: ", err)
 	}
-	defer client.Close()
+	defer sshClient.Close()
 
-	// 创建session
-	session, err := client.NewSession()
-	if err != nil {
-		log.Fatalf("failed to create session: %v", err)
-	}
-	defer session.Close()
+	sub := message.NewSubscriber()
+	defer sub.Close()
+	sub.Subscribe(message.JobQueue, func(d amqp.Delivery) {
+		var message message.Message
+		err := json.Unmarshal(d.Body, &message)
+		if err != nil {
+			fmt.Println("Failed to unmarshal message: ", err)
+		}
+		switch message.Type {
+		case "Add":
+			fmt.Println("Create job: ")
+		case "Delete":
+			fmt.Println("Delete job: ")
+		}
 
-	// 执行命令
-	output, err := session.CombinedOutput("ls -l")
-	if err != nil {
-		log.Fatalf("failed to run command: %v", err)
-	}
-	fmt.Println(string(output))
+	})
 }
