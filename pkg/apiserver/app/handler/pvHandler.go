@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -55,6 +56,15 @@ func AddPV(c *gin.Context) {
 
 	etcd.EtcdKV.Put(key, pvJson)
 	c.JSON(200, gin.H{"add": string(pvJson)})
+
+	mntPath := apiobj.NfsMntPath
+	newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.Name)
+
+	err = os.Mkdir(newPath, 0755)
+	if err != nil {
+		fmt.Println(err)
+	}
+	
 }
 
 func DeletePV(c *gin.Context) {
@@ -62,6 +72,21 @@ func DeletePV(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPVs+"/%s/%s", namespace, name)
+
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(500, gin.H{"get": "fail"})
+	}
+	var pv apiobj.PV
+	json.Unmarshal(res, &pv)
+
+	mntPath := apiobj.NfsMntPath
+	newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.UID)
+
+	err = os.RemoveAll(newPath)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	etcd.EtcdKV.Delete(key)
 	c.JSON(200, gin.H{"delete": "success"})

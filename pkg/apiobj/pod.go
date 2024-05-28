@@ -21,7 +21,6 @@ type PersistentVolumeClaim struct {
 type VolumeMount struct {
 	Name                  string                `yaml:"name" json:"name"`
 	MountPath             string                `yaml:"mountPath" json:"mountPath"`
-	PersistentVolumeClaim PersistentVolumeClaim `yaml:"persistentVolumeClaim" json:"persistentVolumeClaim"`
 }
 type Resource struct {
 	CPU    float64 `yaml:"cpu" json:"cpu"`
@@ -67,6 +66,7 @@ type HostPath struct {
 type Volume struct {
 	Name     string   `yaml:"name" json:"name"`
 	HostPath HostPath `yaml:"hostPath" json:"hostPath"`
+	PersistentVolumeClaim PersistentVolumeClaim `yaml:"persistentVolumeClaim" json:"persistentVolumeClaim"`
 }
 
 type PodSpec struct {

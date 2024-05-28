@@ -9,4 +9,4 @@ spec:
     storage: 10Gi
   storageClassName: standard
   nfs:
-    path: /path/to/nfs
+    path: /mnt

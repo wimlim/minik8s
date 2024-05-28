@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/apiconfig"
 	"net/http"
 	"os"
@@ -23,6 +24,21 @@ var deleteCmd = &cobra.Command{
 func deleteHandler(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		fmt.Println("no args")
+		return
+	}
+	if len(args) > 1 {
+
+		kind := args[0]
+		namespace_name := strings.Split(args[1], "/")
+		obj_namespace := namespace_name[0]
+		obj_name := namespace_name[1]
+
+		URL := apiconfig.Kind2URL[kind]
+		URL = strings.Replace(URL, ":namespace", obj_namespace, -1)
+		URL = strings.Replace(URL, ":name", obj_name, -1)
+		URL = apiconfig.GetApiServerUrl() + URL
+
+		apirequest.DeleteRequest(URL)
 		return
 	}
 

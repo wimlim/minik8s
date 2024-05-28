@@ -1,11 +1,16 @@
 package apiobj
 
+const (
+	NfsMntPath = "/mnt"
+)
+
 type PVCapacity struct {
 	Storage string `yaml:"storage" json:"storage"`
 }
 
 type Nfs struct {
-	Path string `yaml:"path" json:"path"`
+	Path   string `yaml:"path" json:"path"`
+	Server string `yaml:"server" json:"server"`
 }
 
 type PVSpec struct {
