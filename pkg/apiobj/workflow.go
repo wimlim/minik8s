@@ -23,7 +23,7 @@ type WorkflowNode struct {
 type WorkflowSpec struct {
 	EntryName     string                 `yaml:"entryName" json:"entryName"`
 	EntryParam    map[string]interface{} `yaml:"entryParam" json:"entryParam"`
-	WorkflowNodes []WorkflowNode         `yaml:"nodes" json:"nodes"`
+	WorkflowNodes []WorkflowNode         `yaml:"workflowNodes" json:"workflowNodes"`
 }
 
 type WorkflowStatus struct {
