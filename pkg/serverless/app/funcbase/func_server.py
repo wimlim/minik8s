@@ -19,7 +19,7 @@ def post_index():
     except:
         params = ""
     result = func.main(params) # 调用 func.py 中的函数
-    return json.dumps({'result': result})  # 使用 json.dumps 将结果转换为 JSON 格式
+    return json.dumps(result)  # 使用 json.dumps 将结果转换为 JSON 格式
 
 if __name__ == '__main__':
     port_server = os.environ.get('PORT',8080)

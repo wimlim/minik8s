@@ -9,6 +9,7 @@ type FuncNode struct {
 type ChoiceNode struct {
 	TrueNodeName  string `yaml:"trueNodeName" json:"trueNodeName"`
 	FalseNodeName string `yaml:"falseNodeName" json:"falseNodeName"`
+	Condition     string `yaml:"condition" json:"condition"`
 }
 
 type WorkflowNode struct {
@@ -19,9 +20,9 @@ type WorkflowNode struct {
 }
 
 type WorkflowSpec struct {
-	FirstNodeName string `yaml:"firstNodeName" json:"firstNodeName"`
-	FirstParams   string `yaml:"firstParams" json:"firstParams"`
-	Nodes         []Node `yaml:"nodes" json:"nodes"`
+	EntryName     string         `yaml:"entryName" json:"entryName"`
+	EntryParam    string         `yaml:"entryParam" json:"entryParam"`
+	WorkflowNodes []WorkflowNode `yaml:"nodes" json:"nodes"`
 }
 
 type WorkflowStatus struct {
@@ -29,10 +30,10 @@ type WorkflowStatus struct {
 }
 
 type Workflow struct {
-	ApiVersion string       `yaml:"apiVersion" json:"apiVersion"`
-	Kind       string       `yaml:"kind" json:"kind"`
-	MetaData   MetaData     `yaml:"metadata" json:"metadata"`
-	Spec       WorkflowSpec `yaml:"spec" json:"spec"`
+	ApiVersion string         `yaml:"apiVersion" json:"apiVersion"`
+	Kind       string         `yaml:"kind" json:"kind"`
+	MetaData   MetaData       `yaml:"metadata" json:"metadata"`
+	Spec       WorkflowSpec   `yaml:"spec" json:"spec"`
 	Status     WorkflowStatus `yaml:"status" json:"status"`
 }
 

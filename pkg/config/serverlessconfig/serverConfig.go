@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	URL_HttpTrigger        = "/namespaces/:namespace/functions/:name"
-	
+	URL_HttpTrigger = "/:namespace/:name"
+
 	ServerDefaultListenIp = "0.0.0.0"
 	ServerDefaultPort     = 8081
 	ServerLocalIP         = "127.0.0.1"

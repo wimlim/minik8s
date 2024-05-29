@@ -2,8 +2,8 @@ package server
 
 import (
 	"fmt"
+	"io"
 
-	"encoding/json"
 	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/serverlessconfig"
 	"minik8s/pkg/serverless/app/autoscaler"
@@ -82,14 +82,15 @@ func (s *server) FunctionTrigger(c *gin.Context) {
 	}
 
 	defer resp.Body.Close()
-	var res map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&res)
+
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("decode res error\n")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Function trigger failed",
+		})
 		return
 	}
-
-	c.JSON(http.StatusOK, res["result"].(float64))
+	c.Data(http.StatusOK, "application/json", respBody)
 }
 
 func (s *server) FunctionCheck(c *gin.Context) {

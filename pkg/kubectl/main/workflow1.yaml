@@ -3,3 +3,25 @@ kind: Workflow
 metadata:
   name: example-workflow
   namespace: default
+spec:
+  entryName: main
+  entryParam: {A: 1, B: 2}
+  WorkflowNodes:
+    - name: node1
+      type: Function
+      FuncNode:
+        funcNameSpace: default
+        funcName: example-func
+        nextNodeName: node2
+    - name: node2
+      type: Choice
+      ChoiceNode:
+        condition: "result > 10"
+        trueNodeName: node3
+        falseNodeName: node1
+    - name: node3
+      type: Function
+      FuncNode:
+        funcNameSpace: default
+        funcName: example-func
+        nextNodeName: node4
