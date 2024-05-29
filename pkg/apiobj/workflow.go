@@ -1,9 +1,10 @@
 package apiobj
 
 type FuncNode struct {
-	FuncNamespace string `yaml:"funcNamespace" json:"funcNamespace"`
-	FuncName      string `yaml:"funcName" json:"funcName"`
-	NextNodeName  string `yaml:"nextNodeName" json:"nextNodeName"`
+	FuncNamespace string   `yaml:"funcNamespace" json:"funcNamespace"`
+	FuncName      string   `yaml:"funcName" json:"funcName"`
+	FuncParam     []string `yaml:"funcParam" json:"funcParam"`
+	NextNodeName  string   `yaml:"nextNodeName" json:"nextNodeName"`
 }
 
 type ChoiceNode struct {
@@ -20,9 +21,9 @@ type WorkflowNode struct {
 }
 
 type WorkflowSpec struct {
-	EntryName     string         `yaml:"entryName" json:"entryName"`
-	EntryParam    string         `yaml:"entryParam" json:"entryParam"`
-	WorkflowNodes []WorkflowNode `yaml:"nodes" json:"nodes"`
+	EntryName     string                 `yaml:"entryName" json:"entryName"`
+	EntryParam    map[string]interface{} `yaml:"entryParam" json:"entryParam"`
+	WorkflowNodes []WorkflowNode         `yaml:"nodes" json:"nodes"`
 }
 
 type WorkflowStatus struct {

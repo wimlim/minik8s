@@ -4,7 +4,7 @@ metadata:
   name: example-workflow
   namespace: default
 spec:
-  entryName: main
+  entryName: node1
   entryParam: {A: 1, B: 2}
   WorkflowNodes:
     - name: node1
@@ -13,6 +13,7 @@ spec:
         funcNameSpace: default
         funcName: example-func
         nextNodeName: node2
+        funcParam: ["a", "b"]
     - name: node2
       type: Choice
       ChoiceNode:
@@ -24,4 +25,5 @@ spec:
       FuncNode:
         funcNameSpace: default
         funcName: example-func
-        nextNodeName: node4
+        nextNodeName: end
+        funcParam: ["a", "b"]

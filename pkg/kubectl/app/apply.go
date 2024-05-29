@@ -73,7 +73,7 @@ func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
 
 	err := yaml.Unmarshal(content, apiObject)
 	if err != nil {
-		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())
+		fmt.Printf("unmarshal %s error %s\n", apiObject.GetKind(), err.Error())
 		return
 	}
 	if apiObject.GetNamespace() == "" {
