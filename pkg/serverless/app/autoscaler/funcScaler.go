@@ -76,7 +76,7 @@ func (fs *FuncScaler) func_routine() {
 				func_name:      f.MetaData.Name,
 				start_time:     time.Now(),
 				end_time:       time.Now().Add(func_scale_time),
-				call_frequency: 0,
+				call_frequency: 1,
 			}
 			fs.Addfunc(f)
 		} else {
@@ -87,7 +87,7 @@ func (fs *FuncScaler) func_routine() {
 					fmt.Println("scale down function")
 					fs.DeleteRelica(f)
 				} else if fs.recordMap[key].call_frequency > 100 {
-					expectSize := fs.recordMap[key].call_frequency/100 + 1
+					expectSize := fs.recordMap[key].call_frequency/100 + 2
 					fmt.Println("scale up function")
 					fs.AddReplica(f.MetaData.Namespace,f.MetaData.Name, expectSize)
 				}

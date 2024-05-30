@@ -54,20 +54,14 @@ func (s *server) FunctionTrigger(c *gin.Context) {
 	func_name := c.Param("name")
 
 	key := func_namespace + "/" + func_name
-	pod_ips, ok := s.funcPodMap[key]
-
-	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "No available pod for function",
-		})
-		return
-	}
+	pod_ips := s.funcPodMap[key]
 
 	if len(pod_ips) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "No available pod for function",
 		})
 		s.fs.AddReplica(func_namespace, func_name, 2)
+		return
 	}
 
 	idx := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(pod_ips))
