@@ -63,6 +63,10 @@ func describeHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.Function{}
 	case "Workflow":
 		apiObject = &apiobj.Workflow{}
+	case "PV":
+		apiObject = &apiobj.PV{}
+	case "PVC":
+		apiObject = &apiobj.PVC{}
 
 	}
 
@@ -107,7 +111,7 @@ func describeApiObject(content []byte, apiObject apiobj.ApiObject) {
 		return
 	}
 	data := res["data"].(string)
-	// fmt.Println(data)
+	fmt.Println(data)
 	err = json.Unmarshal([]byte(data), apiObject)
 	if err != nil {
 		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())
