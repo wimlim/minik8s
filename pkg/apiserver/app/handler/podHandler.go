@@ -73,7 +73,7 @@ func AddPod(c *gin.Context) {
 		for _, pv := range pvs {
 			if pv.Spec.StorageClassName == pvc.Spec.StorageClassName {
 				mntPath := apiobj.NfsMntPath
-				newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.UID)
+				newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.Name)
 				pod.Spec.Volumes[0].HostPath.Path = newPath
 				pvExist = true
 				break

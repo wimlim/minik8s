@@ -81,7 +81,7 @@ func DeletePV(c *gin.Context) {
 	json.Unmarshal(res, &pv)
 
 	mntPath := apiobj.NfsMntPath
-	newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.UID)
+	newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.Name)
 
 	err = os.RemoveAll(newPath)
 	if err != nil {

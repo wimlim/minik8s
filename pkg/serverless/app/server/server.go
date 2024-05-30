@@ -21,6 +21,7 @@ type server struct {
 	port       int
 	router     *gin.Engine
 	funcPodMap map[string][]string
+	fs         *autoscaler.FuncScaler
 }
 
 func NewServer(ip string, port int) *server {
@@ -29,6 +30,7 @@ func NewServer(ip string, port int) *server {
 		port:       port,
 		router:     gin.Default(),
 		funcPodMap: make(map[string][]string),
+		fs:         autoscaler.NewFuncScaler(),
 	}
 }
 
@@ -42,7 +44,7 @@ func (s *server) Bind() {
 func (s *server) Run() {
 
 	go runner.NewRunner().RunLoop(5*time.Second, 5*time.Second, s.FuncPodMapUpdateRoutine)
-	go autoscaler.NewFuncScaler().Run()
+	go s.fs.Run()
 	s.Bind()
 	s.router.Run(fmt.Sprintf("%s:%d", s.ip, s.port))
 }
@@ -65,11 +67,12 @@ func (s *server) FunctionTrigger(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "No available pod for function",
 		})
-		return
+		s.fs.AddReplica(func_namespace, func_name, 2)
 	}
 
-	idx := rand.New(rand.NewSource(int64(len(pod_ips)))).Intn(len(pod_ips))
+	idx := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(pod_ips))
 	pod_ip := pod_ips[idx]
+	fmt.Println("transfer to pod ip: ", pod_ip)
 
 	URL := fmt.Sprintf("http://%s:8080", pod_ip)
 	body := c.Request.Body
@@ -82,6 +85,8 @@ func (s *server) FunctionTrigger(c *gin.Context) {
 	}
 
 	defer resp.Body.Close()
+
+	s.fs.AddRecord(func_namespace, func_name)
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
