@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/apiconfig"
+	"minik8s/pkg/minik8sTypes"
 	"net/http"
 	"strings"
 )
@@ -32,4 +34,32 @@ func PodUpdate(pod *apiobj.Pod) {
 		return
 	}
 	defer response.Body.Close()
+}
+
+func PodStatusUpdate(podIdentifier minik8sTypes.PodIdentifier, podStatus *apiobj.PodStatus) {
+	URL := apiconfig.URL_PodStatus
+	URL = strings.Replace(URL, ":namespace", podIdentifier.PodNamespace, -1)
+	URL = strings.Replace(URL, ":name", podIdentifier.PodName, -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+	jsonData, err := json.Marshal(podStatus)
+	if err != nil {
+		fmt.Println("marshal pod error")
+		return
+	}
+	req, err := http.NewRequest(http.MethodPut, HttpUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("create put request error:", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Println("put error:", err)
+		return
+	}
+	defer response.Body.Close()
+}
+
+func GetAllRemotePods() ([]apiobj.Pod, error) {
+	return apirequest.GetAllPods()
 }

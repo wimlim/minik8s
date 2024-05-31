@@ -39,7 +39,7 @@ func TestFindAvailablePort(t *testing.T) {
 		fmt.Printf("Test %d: Available Non-repeating port: %s\n", i, port)
 	}
 	fmt.Printf("\npausePortSet:\n")
-	for port, _ := range pausePortSet {
+	for port := range pausePortSet {
 		fmt.Printf("%s\n", port)
 	}
 }
@@ -75,5 +75,15 @@ func TestRemoveAllCommonContainer(t *testing.T) {
 	if errMsg != "" {
 		return
 	}
-	return
+}
+
+func TestGetAllPodStatus(t *testing.T) {
+	allPodStatus, err := GetAllPodStatus()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Printf("There are %d pods\n", len(*allPodStatus))
+	for podIdentifier, podStatus := range *allPodStatus {
+		fmt.Printf("%s\t%s\t%f\n", podIdentifier.PodName, podIdentifier.PodNamespace, podStatus.CpuUsage)
+	}
 }
