@@ -30,7 +30,9 @@ func (p *PodHandler) RunTask(podTask PodTask) error {
 	case Task_StartPod:
 		return runtime.StartPod(podTask.TaskArgs.(*apiobj.Pod))
 	case Task_DelPod:
-		return runtime.DeletePod(podTask.TaskArgs.(*apiobj.Pod))
+		err := runtime.DeletePod(podTask.TaskArgs.(*apiobj.Pod))
+		podTask.OnComplete()
+		return err
 	case Task_StopPod:
 		return runtime.StopPod(podTask.TaskArgs.(*apiobj.Pod))
 	case Task_RestartPod:

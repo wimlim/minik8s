@@ -58,7 +58,7 @@ func updatePodStatusInCache(remotePodsMap map[string]*apiobj.Pod, c *cache.PodCa
 	if err != nil {
 		return err
 	}
-
+	
 	errInfo := ""
 
 	for localPodId, localPod := range localPodsMap {
