@@ -14,9 +14,9 @@ const (
 	URL_PodStatus  = "/api/v1/namespaces/:namespace/pods/:name/status"
 
 	URL_GlobalServices = "/api/v1/services"
-	URL_AllServices   = "/api/v1/namespaces/:namespace/services"
-	URL_Service       = "/api/v1/namespaces/:namespace/services/:name"
-	URL_ServiceStatus = "/api/v1/namespaces/:namespace/services/:name/status"
+	URL_AllServices    = "/api/v1/namespaces/:namespace/services"
+	URL_Service        = "/api/v1/namespaces/:namespace/services/:name"
+	URL_ServiceStatus  = "/api/v1/namespaces/:namespace/services/:name/status"
 
 	URL_GlobalReplicaSets = "/api/v1/replicasets"
 	URL_AllReplicaSets    = "/api/v1/namespaces/:namespace/replicasets"
@@ -41,6 +41,14 @@ const (
 	URL_AllWorkflows    = "/api/v1/namespaces/:namespace/workflows"
 	URL_Workflow        = "/api/v1/namespaces/:namespace/workflows/:name"
 	URL_WorkflowStatus  = "/api/v1/namespaces/:namespace/workflows/:name/status"
+
+	URL_GlobalPVs = "/api/v1/pvs"
+	URL_AllPVs    = "/api/v1/namespaces/:namespace/pvs"
+	URL_PV        = "/api/v1/namespaces/:namespace/pvs/:name"
+
+	URL_GlobalPVCs = "/api/v1/pvcs"
+	URL_AllPVCs    = "/api/v1/namespaces/:namespace/pvcs"
+	URL_PVC        = "/api/v1/namespaces/:namespace/pvcs/:name"
 )
 
 var Kind2URL = map[string]string{
@@ -52,5 +60,6 @@ var Kind2URL = map[string]string{
 	"Dns":        URL_Dns,
 	"Function":   URL_Function,
 	"Workflow":   URL_Workflow,
+	"PV":         URL_PV,
+	"PVC":        URL_PVC,
 }
-	

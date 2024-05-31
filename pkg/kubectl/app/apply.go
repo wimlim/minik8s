@@ -65,6 +65,10 @@ func applyHandler(cmd *cobra.Command, args []string) {
 		return
 	case "Workflow":
 		apiObject = &apiobj.Workflow{}
+	case "PV":
+		apiObject = &apiobj.PV{}
+	case "PVC":
+		apiObject = &apiobj.PVC{}
 	}
 
 	applyApiObject(content, apiObject)
