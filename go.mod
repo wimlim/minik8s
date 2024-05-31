@@ -10,6 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.5.9
+	github.com/knetic/govaluate v3.0.0+incompatible
 	github.com/moby/ipvs v1.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/streadway/amqp v1.1.0

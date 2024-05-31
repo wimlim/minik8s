@@ -7,6 +7,7 @@ import (
 	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/serverlessconfig"
 	"minik8s/pkg/serverless/app/autoscaler"
+	"minik8s/pkg/serverless/app/workflow"
 	"minik8s/tools/runner"
 	"net/http"
 	"time"
@@ -43,6 +44,7 @@ func (s *server) Run() {
 
 	go runner.NewRunner().RunLoop(5*time.Second, 5*time.Second, s.FuncPodMapUpdateRoutine)
 	go autoscaler.NewFuncScaler().Run()
+	go workflow.Run()
 	s.Bind()
 	s.router.Run(fmt.Sprintf("%s:%d", s.ip, s.port))
 }

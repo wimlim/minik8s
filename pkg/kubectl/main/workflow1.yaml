@@ -11,19 +11,21 @@ spec:
       type: Function
       funcNode:
         funcNameSpace: default
-        funcName: example-func
+        funcName: example-function
         nextNodeName: node2
         funcParam: ["a", "b"]
     - name: node2
       type: Choice
-      ChoiceNode:
-        condition: "result > 10"
+      choiceNode:
+        expression: "$result > 10"
         trueNodeName: node3
+        trueEntryParam: {a: $result, b: 1}
         falseNodeName: node1
+        falseEntryParam: {a: $result, b: 2}
     - name: node3
       type: Function
       funcNode:
         funcNameSpace: default
-        funcName: example-func
+        funcName: example-function
         nextNodeName: end
         funcParam: ["a", "b"]
