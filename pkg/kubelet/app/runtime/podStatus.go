@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/kubelet/app/runtime/container"
@@ -31,17 +32,21 @@ func GetAllPodStatus() (*map[minik8sTypes.PodIdentifier]*apiobj.PodStatus, error
 		}
 		mapPodId2ContainerIds[podIdentifier] = append(mapPodId2ContainerIds[podIdentifier], ctn.ID)
 	}
-
+	errInfo := ""
 	for podIdentifier, containerIds := range mapPodId2ContainerIds {
 		mapPodId2PodStatus[podIdentifier], err = getPodStatus(podIdentifier.PodId, &containerIds)
 		if err != nil {
-			return nil, err
+			errInfo += err.Error() + "\n"
 		}
+	}
+	if errInfo != "" {
+		return &mapPodId2PodStatus, errors.New(errInfo)
 	}
 	return &mapPodId2PodStatus, nil
 }
 
 func getPodStatus(podId string, containerIds *[]string) (*apiobj.PodStatus, error) {
+	errInfo := ""
 	containerStates := []types.ContainerState{}
 	containerIPs := []string{}
 	podCpuUsage := float64(0.0)
@@ -49,7 +54,7 @@ func getPodStatus(podId string, containerIds *[]string) (*apiobj.PodStatus, erro
 	for _, ctnId := range *containerIds {
 		inspectRes, err := container.InspectContainer(ctnId)
 		if err != nil {
-			return nil, err
+			errInfo += err.Error() + "\n"
 		}
 		if inspectRes == nil {
 			containerStates = append(containerStates, types.ContainerState{})
@@ -59,18 +64,17 @@ func getPodStatus(podId string, containerIds *[]string) (*apiobj.PodStatus, erro
 
 		containerIP, err := weave.WeaveFindIpByContainerID(ctnId)
 		if err != nil {
-			return nil, err
+			errInfo += err.Error() + "\n"
 		}
 		containerIPs = append(containerIPs, containerIP)
 
 		containerCpuUsage, containerMemUsage, err := container.CalcContainerCPUAndMemoryUsage(ctnId)
 		if err != nil {
-			return nil, err
+			errInfo += err.Error() + "\n"
 		}
 		podCpuUsage += containerCpuUsage
 		podMemUsage += containerMemUsage
 	}
-
 	podIP := ""
 	if len(containerIPs) != 0 {
 		for _, containerIP := range containerIPs {
@@ -93,6 +97,9 @@ func getPodStatus(podId string, containerIds *[]string) (*apiobj.PodStatus, erro
 		MemUsage:       podMemUsage,
 		ContainerState: containerStates,
 	}
+	if errInfo != "" {
+		return &podStatus, errors.New(errInfo)
+	}
 	return &podStatus, nil
 }
 
@@ -108,7 +115,7 @@ func parsePodPhaseByContainerStates(containerStates *[]types.ContainerState) (st
 	for _, containerState := range *containerStates {
 		isAllCreated = isAllCreated && (containerState.Status == "created")
 		hasRunning = hasRunning || containerState.Running
-		isAllDead = isAllDead && containerState.Dead
+		isAllDead = isAllDead && (containerState.Status == "exited")
 		hasFailedContainer = hasFailedContainer || (containerState.ExitCode != 0)
 	}
 

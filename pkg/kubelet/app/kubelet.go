@@ -5,13 +5,33 @@ import (
 	"fmt"
 	"minik8s/pkg/apiobj"
 	apiserverutil "minik8s/pkg/kubelet/app/apiserverUtil"
-	"minik8s/pkg/kubelet/app/runtime"
+	"minik8s/pkg/kubelet/app/cache"
+	podmanager "minik8s/pkg/kubelet/app/podManager"
+	"minik8s/pkg/kubelet/app/status"
 	"minik8s/pkg/message"
 
 	"github.com/streadway/amqp"
 )
 
-func msgHandler(d amqp.Delivery) {
+type Kubelet struct {
+	podManager *podmanager.PodManager
+	podCache   *cache.PodCache
+}
+
+type KubeletInterface interface {
+	Run()
+}
+
+func NewKubelet() *Kubelet {
+	newPodManager := podmanager.NewPodManager()
+	newPodCache := cache.NewPodCache()
+	return &Kubelet{
+		podManager: newPodManager,
+		podCache:   newPodCache,
+	}
+}
+
+func (k *Kubelet) msgHandler(d amqp.Delivery) {
 	fmt.Println(string(d.Body))
 	var msg message.Message
 	json.Unmarshal(d.Body, &msg)
@@ -19,19 +39,24 @@ func msgHandler(d amqp.Delivery) {
 	var pod apiobj.Pod
 	json.Unmarshal([]byte(msg.Content), &pod)
 	if msg.Type == "Delete" {
-		runtime.DeletePod(&pod)
+		k.podManager.DeletePod(&pod)
 		fmt.Println(pod.MetaData.Name)
 	} else if msg.Type == "Add" {
-		runtime.CreatePod(&pod)
+		k.podManager.AddPod(&pod)
 		fmt.Println(pod.MetaData.Name)
 		apiserverutil.PodUpdate(&pod)
 	}
 }
 
-func Run() {
+func (k *Kubelet) listWatcher() {
 	s := message.NewSubscriber()
 	defer s.Close()
 	for {
-		s.Subscribe(message.PodQueue, msgHandler)
+		s.Subscribe(message.PodQueue, k.msgHandler)
 	}
+}
+
+func (k *Kubelet) Run() {
+	status.Run(k.podCache)
+	k.listWatcher()
 }

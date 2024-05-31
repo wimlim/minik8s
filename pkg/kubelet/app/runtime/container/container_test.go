@@ -113,3 +113,12 @@ func TestGetContainerStatus(t *testing.T) {
 	fmt.Printf("%f\n", calcCPUUsage(statsInfo))
 	fmt.Printf("%f\n", calcMemoryUsage(statsInfo))
 }
+
+func TestCalcContainerCPUAndMemoryUsage(t *testing.T) {
+	containerCpuUsage, containerMemUsage, err := CalcContainerCPUAndMemoryUsage("222ff4c71856")
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("%f\n", containerCpuUsage)
+	fmt.Printf("%f\n", containerMemUsage)
+}

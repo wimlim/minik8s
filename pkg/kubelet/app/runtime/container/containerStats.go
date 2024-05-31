@@ -19,7 +19,7 @@ func CalcContainerCPUAndMemoryUsage(containerId string) (float64, float64, error
 		return 0.0, 0.0, err
 	}
 	CPUUsage := calcCPUUsage(statsInfo)
-	MemoryUsage := calcCPUUsage(statsInfo)
+	MemoryUsage := calcMemoryUsage(statsInfo)
 	return CPUUsage, MemoryUsage, nil
 }
 

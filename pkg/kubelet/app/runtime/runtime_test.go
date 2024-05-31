@@ -84,6 +84,6 @@ func TestGetAllPodStatus(t *testing.T) {
 	}
 	fmt.Printf("There are %d pods\n", len(*allPodStatus))
 	for podIdentifier, podStatus := range *allPodStatus {
-		fmt.Printf("%s\t%s\t%f\n", podIdentifier.PodName, podIdentifier.PodNamespace, podStatus.CpuUsage)
+		fmt.Printf("%s\t%f\t%f\n", podIdentifier.PodName, podStatus.MemUsage, podStatus.CpuUsage)
 	}
 }

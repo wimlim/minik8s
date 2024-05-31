@@ -22,13 +22,10 @@ func pushNodeStatus() error {
 
 func pushAllPodStatus() error {
 	allPodStatus, err := runtime.GetAllPodStatus()
-	if err != nil {
-		return err
-	}
 	for podIdentifier, podStatus := range *allPodStatus {
 		apiserverutil.PodStatusUpdate(podIdentifier, podStatus)
 	}
-	return nil
+	return err
 }
 
 func pullAllPodStatus(c *cache.PodCache) ([]apiobj.Pod, error) {
@@ -119,5 +116,5 @@ func Run(c *cache.PodCache) {
 	}
 	go r.RunLoop(0*time.Second, 5*time.Second, runPushNodeStatus)
 	go r.RunLoop(0*time.Second, 5*time.Second, runPushAllPodStatus)
-	go r.RunLoop(0*time.Second, 5*time.Second, runPullAllPodStatus)
+	go r.RunLoop(0*time.Second, 1000*time.Second, runPullAllPodStatus)
 }

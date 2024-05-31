@@ -1,7 +1,9 @@
 package podmanager
 
 type PodTask struct {
-	TaskType string
+	TaskType   string
+	TaskArgs   interface{}
+	OnComplete func()
 }
 
 const (
