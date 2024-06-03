@@ -89,7 +89,7 @@ func (fs *FuncScaler) func_routine() {
 				} else if fs.recordMap[key].call_frequency > 100 {
 					expectSize := fs.recordMap[key].call_frequency/100 + 2
 					fmt.Println("scale up function")
-					fs.AddReplica(f.MetaData.Namespace,f.MetaData.Name, expectSize)
+					fs.AddReplica(f.MetaData.Namespace, f.MetaData.Name, expectSize)
 				}
 
 				record := fs.recordMap[key]
@@ -145,7 +145,7 @@ func (fs *FuncScaler) DeleteRelica(f apiobj.Function) {
 
 	obj, _ := apirequest.GetRequest(f.MetaData.Namespace, f.MetaData.Name+"-replica", "ReplicaSet")
 	replica := obj.(*apiobj.ReplicaSet)
-	replica.Spec.Replicas = replica.Spec.Replicas / 2
+	replica.Spec.Replicas = replica.Spec.Replicas
 
 	URL := apiconfig.GetApiServerUrl() + apiconfig.URL_ReplicaSet
 	URL = strings.Replace(URL, ":namespace", replica.MetaData.Namespace, -1)
