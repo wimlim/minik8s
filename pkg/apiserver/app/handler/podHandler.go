@@ -51,6 +51,7 @@ func AddPod(c *gin.Context) {
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
 	pod.MetaData.UID = uuid.New().String()[:16]
 
+	//pv pvc handle
 	if len(pod.Spec.Volumes) > 0 && pod.Spec.Volumes[0].HostPath.Path == ""{
 
 		if pod.Spec.Volumes[0].PersistentVolumeClaim.ClaimName != "" {
@@ -135,6 +136,11 @@ func AddPod(c *gin.Context) {
 	p := message.NewPublisher()
 	defer p.Close()
 	p.Publish(message.ScheduleQueue, msgJson)
+
+	
+
+	//replicaset handle
+
 }
 
 func DeletePod(c *gin.Context) {
@@ -179,6 +185,41 @@ func UpdatePod(c *gin.Context) {
 
 	etcd.EtcdKV.Put(key, podJson)
 	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
+
+	//service handle
+	if(pod.MetaData.Labels["app"] != ""){
+		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["app"])
+		res, _ := etcd.EtcdKV.Get(svcKey)
+		var svc apiobj.Service
+		json.Unmarshal([]byte(res), &svc)
+
+		var svcports []string
+		var podports []string
+		for _, port := range  svc.Spec.Ports{
+			svcports = append(svcports, fmt.Sprintf("%d",port.Port))
+			podports = append(podports, fmt.Sprintf("%d",port.TargetPort))
+		}
+
+		svcMsg := apiobj.PodSvcMsg{
+			SvcIp:    svc.Spec.ClusterIP,
+			SvcPorts: svcports,
+			PodIp:    pod.Status.PodIP,
+			PodPorts: podports,
+		}
+
+		svcMsgJson, _ := json.Marshal(svcMsg)
+		msg := message.Message{
+			Type:    "Update",
+			URL:     key,
+			Name:    name,
+			Content: string(svcMsgJson),
+		}
+		msgJson, _ := json.Marshal(msg)
+		p := message.NewPublisher()
+		defer p.Close()
+		p.Publish(message.ServiceQueue, msgJson)
+
+	}
 
 }
 
