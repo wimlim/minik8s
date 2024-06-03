@@ -8,6 +8,7 @@ import (
 	"minik8s/pkg/apirequest"
 	"minik8s/pkg/message"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/streadway/amqp"
@@ -65,11 +66,6 @@ func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
 		}
 	}
 
-	if len(podIPs) == 0 {
-		fmt.Println("No pods match service selector")
-		return
-	}
-
 	kp.ipvsManager.AddService(service.Spec, podIPs)
 }
 
@@ -84,6 +80,32 @@ func (kp *KubeProxy) handleServiceDelete(msg message.Message) {
 }
 
 func (kp *KubeProxy) handleServiceUpdate(msg message.Message) {
+	fmt.Println("handleServiceUpdate")
+	var svc apiobj.PodSvcMsg
+	err := json.Unmarshal([]byte(msg.Content), &svc)
+	if err != nil {
+		fmt.Println("Failed to unmarshal service message:", err)
+		return
+	}
+	// iterate svcports & podports
+	switch msg.Name {
+	case "Add":
+		for i, svcport := range svc.SvcPorts {
+			podport := svc.PodPorts[i]
+			// add ipvs rule
+			isvcport, _ := strconv.Atoi(svcport)
+			ipodport, _ := strconv.Atoi(podport)
+			kp.ipvsManager.AddRule(svc.SvcIp, uint16(isvcport), svc.PodIp, uint16(ipodport))
+		}
+	case "Delete":
+		for i, svcport := range svc.SvcPorts {
+			podport := svc.PodPorts[i]
+			// delete ipvs rule
+			isvcport, _ := strconv.Atoi(svcport)
+			ipodport, _ := strconv.Atoi(podport)
+			kp.ipvsManager.DeleteRule(svc.SvcIp, uint16(isvcport), svc.PodIp, uint16(ipodport))
+		}
+	}
 }
 
 func (kp *KubeProxy) handleDNSAdd(msg message.Message) {
