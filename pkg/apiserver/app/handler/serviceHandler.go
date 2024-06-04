@@ -9,7 +9,6 @@ import (
 	"minik8s/pkg/message"
 	nginxmanager "minik8s/pkg/nginx/app"
 	"net/http"
-	"os"
 
 	"github.com/google/uuid"
 
