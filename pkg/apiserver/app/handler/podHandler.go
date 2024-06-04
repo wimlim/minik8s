@@ -170,8 +170,8 @@ func DeletePod(c *gin.Context) {
 	p.Publish(podQue, msgJson)
 
 	// service handle
-	if pod.MetaData.Labels["app"] != "" {
-		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["app"])
+	if pod.MetaData.Labels["svc"] != ""  && pod.Status.PodIP != ""{
+		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["svc"])
 		res, _ := etcd.EtcdKV.Get(svcKey)
 		var svc apiobj.Service
 		json.Unmarshal([]byte(res), &svc)
