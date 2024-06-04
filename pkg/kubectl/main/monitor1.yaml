@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: http-server
+  labels:
+    app: myapp
+spec:
+  containers:
+    - name: http-server
+      image: python:3.9-alpine
+      command: ["python", "-m", "http.server", "4335"]
+      ports:
+        - containerPort: 4335
+monitor:
+  metricsPort: ["8990"]

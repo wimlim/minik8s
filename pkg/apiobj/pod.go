@@ -86,6 +86,11 @@ type Pod struct {
 	MetaData   MetaData  `yaml:"metadata" json:"metadata"`
 	Spec       PodSpec   `yaml:"spec" json:"spec"`
 	Status     PodStatus `yaml:"status" json:"status"`
+	Monitor    Monitor   `yaml:"monitor" json:"monitor"`
+}
+
+type Monitor struct {
+	MetricsPorts []string `yaml:"metricsPorts" json:"metricsPorts"`
 }
 
 func (p *Pod) GetKind() string {
