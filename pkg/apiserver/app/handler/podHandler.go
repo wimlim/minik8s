@@ -202,7 +202,7 @@ func DeletePod(c *gin.Context) {
 		msgJson, _ := json.Marshal(msg)
 		p := message.NewPublisher()
 		defer p.Close()
-		
+
 		nodeKey := etcd.PATH_EtcdNodes
 		resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
 
