@@ -52,14 +52,14 @@ func AddPod(c *gin.Context) {
 	pod.MetaData.UID = uuid.New().String()[:16]
 
 	//pv pvc handle
-	if len(pod.Spec.Volumes) > 0 && pod.Spec.Volumes[0].HostPath.Path == ""{
+	if len(pod.Spec.Volumes) > 0 && pod.Spec.Volumes[0].HostPath.Path == "" {
 
 		if pod.Spec.Volumes[0].PersistentVolumeClaim.ClaimName != "" {
 			pvcKey := fmt.Sprintf(etcd.PATH_EtcdPVCs+"/%s/%s", namespace, pod.Spec.Volumes[0].PersistentVolumeClaim.ClaimName)
 			pvcRes, _ := etcd.EtcdKV.Get(pvcKey)
 			var pvc apiobj.PVC
 			json.Unmarshal([]byte(pvcRes), &pvc)
-	
+
 			pvKey := fmt.Sprintf(etcd.PATH_EtcdPVs+"/%s", namespace)
 			pvList, err := etcd.EtcdKV.GetPrefix(pvKey)
 			if err != nil {
@@ -71,7 +71,7 @@ func AddPod(c *gin.Context) {
 				json.Unmarshal([]byte(item), &pv)
 				pvs = append(pvs, pv)
 			}
-	
+
 			var pvExist = false
 			for _, pv := range pvs {
 				if pv.Spec.StorageClassName == pvc.Spec.StorageClassName {
@@ -82,7 +82,7 @@ func AddPod(c *gin.Context) {
 					break
 				}
 			}
-	
+
 			if !pvExist {
 				pv := apiobj.PV{
 					APIVersion: "v1",
@@ -96,27 +96,25 @@ func AddPod(c *gin.Context) {
 						StorageClassName: pvc.Spec.StorageClassName,
 					},
 				}
-	
+
 				mntPath := apiobj.NfsMntPath
 				newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.Name)
-	
+
 				err = os.Mkdir(newPath, 0755)
 				if err != nil {
 					fmt.Println(err)
 				}
 				pod.Spec.Volumes[0].HostPath.Path = newPath
-	
-	
+
 				pvKey := fmt.Sprintf(etcd.PATH_EtcdPVs+"/%s/%s", pv.MetaData.Namespace, pv.MetaData.Name)
 				pvJson, _ := json.Marshal(pv)
 				etcd.EtcdKV.Put(pvKey, pvJson)
-	
+
 			}
-	
+
 		}
 
 	}
-	
 
 	podJson, err := json.Marshal(pod)
 	if err != nil {
@@ -137,8 +135,6 @@ func AddPod(c *gin.Context) {
 	defer p.Close()
 	p.Publish(message.ScheduleQueue, msgJson)
 
-	
-
 	//replicaset handle
 
 }
@@ -150,6 +146,8 @@ func DeletePod(c *gin.Context) {
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
 
 	res, _ := etcd.EtcdKV.Get(key)
+	var pod apiobj.Pod
+	json.Unmarshal([]byte(res), &pod)
 
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
@@ -167,6 +165,41 @@ func DeletePod(c *gin.Context) {
 	p := message.NewPublisher()
 	defer p.Close()
 	p.Publish(message.PodQueue, msgJson)
+
+	// service handle
+	if pod.MetaData.Labels["app"] != "" {
+		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["app"])
+		res, _ := etcd.EtcdKV.Get(svcKey)
+		var svc apiobj.Service
+		json.Unmarshal([]byte(res), &svc)
+
+		var svcports []string
+		var podports []string
+		for _, port := range svc.Spec.Ports {
+			svcports = append(svcports, fmt.Sprintf("%d", port.Port))
+			podports = append(podports, fmt.Sprintf("%d", port.TargetPort))
+		}
+
+		svcMsg := apiobj.PodSvcMsg{
+			SvcIp:    svc.Spec.ClusterIP,
+			SvcPorts: svcports,
+			PodIp:    pod.Status.PodIP,
+			PodPorts: podports,
+		}
+
+		svcMsgJson, _ := json.Marshal(svcMsg)
+		msg := message.Message{
+			Type:    "Update",
+			URL:     svcKey,
+			Name:    "Delete",
+			Content: string(svcMsgJson),
+		}
+		msgJson, _ := json.Marshal(msg)
+		p := message.NewPublisher()
+		defer p.Close()
+		p.Publish(message.ServiceQueue, msgJson)
+
+	}
 }
 
 func UpdatePod(c *gin.Context) {
@@ -187,7 +220,7 @@ func UpdatePod(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
 
 	//service handle
-	if(pod.MetaData.Labels["app"] != ""){
+	if pod.MetaData.Labels["app"] != "" && pod.Status.PodIP != "" {
 		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["app"])
 		res, _ := etcd.EtcdKV.Get(svcKey)
 		var svc apiobj.Service
@@ -195,9 +228,9 @@ func UpdatePod(c *gin.Context) {
 
 		var svcports []string
 		var podports []string
-		for _, port := range  svc.Spec.Ports{
-			svcports = append(svcports, fmt.Sprintf("%d",port.Port))
-			podports = append(podports, fmt.Sprintf("%d",port.TargetPort))
+		for _, port := range svc.Spec.Ports {
+			svcports = append(svcports, fmt.Sprintf("%d", port.Port))
+			podports = append(podports, fmt.Sprintf("%d", port.TargetPort))
 		}
 
 		svcMsg := apiobj.PodSvcMsg{
@@ -211,7 +244,7 @@ func UpdatePod(c *gin.Context) {
 		msg := message.Message{
 			Type:    "Update",
 			URL:     key,
-			Name:    name,
+			Name:    "Add",
 			Content: string(svcMsgJson),
 		}
 		msgJson, _ := json.Marshal(msg)

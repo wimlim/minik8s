@@ -49,3 +49,10 @@ func WeaveFindIpByContainerID(containerID string) (string, error) {
 
 	return matches[1], nil
 }
+
+func WeaveConnect(serverIP string) (string, error) {
+	if serverIP == "" {
+		return "", errors.New("serverIP is empty")
+	}
+	return execWeaveCommand("connect", serverIP)
+}
