@@ -6,6 +6,7 @@ import (
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
+	nginxmanager "minik8s/pkg/nginx/app"
 	"net/http"
 	"os"
 
@@ -178,6 +179,8 @@ func DeletePod(c *gin.Context) {
 		for _, port := range svc.Spec.Ports {
 			svcports = append(svcports, fmt.Sprintf("%d", port.Port))
 			podports = append(podports, fmt.Sprintf("%d", port.TargetPort))
+			// update nginx config
+			nginxmanager.DeleteServiceRule(svc.Spec.ClusterIP, uint16(port.Port), pod.Status.PodIP, uint16(port.TargetPort))
 		}
 
 		svcMsg := apiobj.PodSvcMsg{
@@ -231,6 +234,8 @@ func UpdatePod(c *gin.Context) {
 		for _, port := range svc.Spec.Ports {
 			svcports = append(svcports, fmt.Sprintf("%d", port.Port))
 			podports = append(podports, fmt.Sprintf("%d", port.TargetPort))
+			// update nginx config
+			nginxmanager.AddServiceRule(svc.Spec.ClusterIP, uint16(port.Port), pod.Status.PodIP, uint16(port.TargetPort))
 		}
 
 		svcMsg := apiobj.PodSvcMsg{
