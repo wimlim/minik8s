@@ -165,7 +165,9 @@ func DeletePod(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.PodQueue, msgJson)
+
+	podQue := fmt.Sprintf(message.PodQueue+"-%s", pod.Status.NodeName)
+	p.Publish(podQue, msgJson)
 
 	// service handle
 	if pod.MetaData.Labels["app"] != "" {
