@@ -166,7 +166,7 @@ func DeletePod(c *gin.Context) {
 	p := message.NewPublisher()
 	defer p.Close()
 
-	podQue := fmt.Sprintf(message.PodQueue+"-%s", pod.Status.NodeName)
+	podQue := fmt.Sprintf(message.PodQueue+"-%s", pod.Spec.NodeName)
 	p.Publish(podQue, msgJson)
 
 	// service handle
