@@ -59,10 +59,41 @@ func (s *server) FunctionTrigger(c *gin.Context) {
 	pod_ips := s.funcPodMap[key]
 
 	if len(pod_ips) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "No available pod for function",
-		})
-		s.fs.AddReplica(func_namespace, func_name, 2)
+		
+		s.fs.AddReplica(func_namespace, func_name, 1)
+
+		checkPodIPs := func() bool {
+			new_pod_ips := s.funcPodMap[key]
+			return len(new_pod_ips) > 0
+		}
+	
+		// 如果 pod_ips 为空，则添加 replica 并等待直到不为空
+		for !checkPodIPs() {
+			time.Sleep(1 * time.Second) // 等待一秒钟
+		}
+
+		new_pod_ips := s.funcPodMap[key]
+		new_pod_ip := new_pod_ips[0]
+		fmt.Println("transfer to pod ip: ", new_pod_ip)
+
+		URL := fmt.Sprintf("http://%s:8080", new_pod_ip)
+		body := c.Request.Body
+		resp, err := http.Post(URL, "application/json", body)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Function trigger failed",
+			})
+		}
+		defer resp.Body.Close()
+		s.fs.AddRecord(func_namespace, func_name)
+
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Function trigger failed",
+			})
+		}
+		c.Data(http.StatusOK, "application/json", respBody)
 		return
 	}
 

@@ -71,34 +71,32 @@ func (fs *FuncScaler) func_routine() {
 		key := fmt.Sprintf("%s/%s", f.MetaData.Namespace, f.MetaData.Name)
 		if _, ok := fs.funcMap[key]; !ok {
 			fs.funcMap[key] = f
-			fs.recordMap[key] = Record{
-				func_namespace: f.MetaData.Namespace,
-				func_name:      f.MetaData.Name,
-				start_time:     time.Now(),
-				end_time:       time.Now().Add(func_scale_time),
-				call_frequency: 1,
-			}
 			fs.Addfunc(f)
 		} else {
-			end_time := fs.recordMap[key].end_time
-			if time.Now().After(end_time) {
+			if fs.recordMap[key] != (Record{}) {
+				end_time := fs.recordMap[key].end_time
+				if time.Now().After(end_time) {
 
-				if fs.recordMap[key].call_frequency == 0 {
-					fmt.Println("scale down function")
-					fs.DeleteRelica(f)
-				} else if fs.recordMap[key].call_frequency > 100 {
-					expectSize := fs.recordMap[key].call_frequency/100 + 2
-					fmt.Println("scale up function")
-					fs.AddReplica(f.MetaData.Namespace,f.MetaData.Name, expectSize)
+					if fs.recordMap[key].call_frequency == 0 {
+						fmt.Println("scale down function")
+						fs.DeleteRelica(f)
+					} else if fs.recordMap[key].call_frequency > 100 {
+						expectSize := fs.recordMap[key].call_frequency/100 + 1
+						fmt.Println("scale up function")
+						fs.AddReplica(f.MetaData.Namespace, f.MetaData.Name, expectSize)
+					} else {
+						fs.AddReplica(f.MetaData.Namespace, f.MetaData.Name, 1)
+					}
+
+					record := fs.recordMap[key]
+					record.start_time = time.Now()
+					record.end_time = time.Now().Add(func_scale_time)
+					record.call_frequency = 0
+					fs.recordMap[key] = record
+
 				}
-
-				record := fs.recordMap[key]
-				record.start_time = time.Now()
-				record.end_time = time.Now().Add(func_scale_time)
-				record.call_frequency = 0
-				fs.recordMap[key] = record
-
 			}
+
 		}
 	}
 
@@ -121,6 +119,7 @@ func (fs *FuncScaler) AddRecord(func_namespace string, func_name string) {
 		record := fs.recordMap[key]
 		record.call_frequency++
 		fs.recordMap[key] = record
+		fmt.Println("call frequency: ", record.call_frequency)
 	}
 
 }
@@ -145,7 +144,7 @@ func (fs *FuncScaler) DeleteRelica(f apiobj.Function) {
 
 	obj, _ := apirequest.GetRequest(f.MetaData.Namespace, f.MetaData.Name+"-replica", "ReplicaSet")
 	replica := obj.(*apiobj.ReplicaSet)
-	replica.Spec.Replicas = replica.Spec.Replicas / 2
+	replica.Spec.Replicas = 0
 
 	URL := apiconfig.GetApiServerUrl() + apiconfig.URL_ReplicaSet
 	URL = strings.Replace(URL, ":namespace", replica.MetaData.Namespace, -1)
@@ -181,7 +180,7 @@ func (fs *FuncScaler) Addfunc(f apiobj.Function) {
 			},
 		},
 		Spec: apiobj.ReplicaSetSpec{
-			Replicas: 2,
+			Replicas: 0,
 			Selector: apiobj.ReplicaSetSelector{
 				MatchLabels: map[string]string{
 					"func_uid": f.MetaData.UID,
