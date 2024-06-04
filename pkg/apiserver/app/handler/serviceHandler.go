@@ -93,9 +93,15 @@ func AddService(c *gin.Context) {
 	p := message.NewPublisher()
 	defer p.Close()
 
-	hostname , _ := os.Hostname()
-	que := fmt.Sprintf(message.ServiceQueue + "-%s", hostname)
-	p.Publish(que, msgJson)
+	nodeKey := etcd.PATH_EtcdNodes
+	resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+	for _, item := range resList {
+		var node apiobj.Node
+		json.Unmarshal([]byte(item), &node)
+		que := fmt.Sprintf(message.ServiceQueue+"-%s", node.MetaData.Name)
+		p.Publish(que, msgJson)
+	}
 }
 
 func UpdateService(c *gin.Context) {
@@ -155,10 +161,16 @@ func DeleteService(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	
-	hostname , _ := os.Hostname()
-	que := fmt.Sprintf(message.ServiceQueue + "-%s", hostname)
-	p.Publish(que, msgJson)
+
+	nodeKey := etcd.PATH_EtcdNodes
+	resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+	for _, item := range resList {
+		var node apiobj.Node
+		json.Unmarshal([]byte(item), &node)
+		que := fmt.Sprintf(message.ServiceQueue+"-%s", node.MetaData.Name)
+		p.Publish(que, msgJson)
+	}
 }
 
 func GetServiceStatus(c *gin.Context) {
@@ -200,7 +212,7 @@ func UpdateServiceStatus(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
 	}
-	
+
 	etcd.EtcdKV.Put(key, serviceJson)
 	c.JSON(http.StatusOK, gin.H{"update": string(serviceJson)})
 }
