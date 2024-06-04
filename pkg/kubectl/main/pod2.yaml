@@ -3,7 +3,7 @@ kind: Pod
 metadata:
   name: http-server-2
   labels:
-    app: myapp-2
+    svc: example-service-2
 spec:
   containers:
     - name: http-server-2

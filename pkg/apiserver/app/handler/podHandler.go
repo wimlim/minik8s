@@ -200,7 +200,16 @@ func DeletePod(c *gin.Context) {
 		msgJson, _ := json.Marshal(msg)
 		p := message.NewPublisher()
 		defer p.Close()
-		p.Publish(message.ServiceQueue, msgJson)
+		
+		nodeKey := etcd.PATH_EtcdNodes
+		resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+		for _, item := range resList {
+			var node apiobj.Node
+			json.Unmarshal([]byte(item), &node)
+			que := fmt.Sprintf(message.ServiceQueue+"-%s", node.MetaData.Name)
+			p.Publish(que, msgJson)
+		}
 
 	}
 }
@@ -220,12 +229,16 @@ func UpdatePod(c *gin.Context) {
 	}
 
 	etcd.EtcdKV.Put(key, podJson)
-	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
 
 	//service handle
-	if pod.MetaData.Labels["app"] != "" && pod.Status.PodIP != "" {
-		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["app"])
-		res, _ := etcd.EtcdKV.Get(svcKey)
+	if pod.MetaData.Labels["svc"] != "" && pod.Status.PodIP != "" {
+		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["svc"])
+		res, err := etcd.EtcdKV.Get(svcKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+			fmt.Println("no service")
+			return
+		}
 		var svc apiobj.Service
 		json.Unmarshal([]byte(res), &svc)
 
@@ -253,12 +266,23 @@ func UpdatePod(c *gin.Context) {
 			Content: string(svcMsgJson),
 		}
 		msgJson, _ := json.Marshal(msg)
+
 		p := message.NewPublisher()
 		defer p.Close()
-		p.Publish(message.ServiceQueue, msgJson)
+
+		nodeKey := etcd.PATH_EtcdNodes
+		resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+		for _, item := range resList {
+			var node apiobj.Node
+			json.Unmarshal([]byte(item), &node)
+			que := fmt.Sprintf(message.ServiceQueue+"-%s", node.MetaData.Name)
+			p.Publish(que, msgJson)
+		}
 
 	}
 
+	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
 }
 
 func GetPod(c *gin.Context) {

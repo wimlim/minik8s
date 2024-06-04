@@ -9,6 +9,7 @@ const (
 	RabbitMQUser        = "ling"
 	RabbitMQPassword    = "123456"
 	RabbitMQDefaultPort = 5672
+	DefaultExchange     = "minik8s"
 )
 
 func RabbitMQURL() string {

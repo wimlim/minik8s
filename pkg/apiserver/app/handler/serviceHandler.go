@@ -9,6 +9,7 @@ import (
 	"minik8s/pkg/message"
 	nginxmanager "minik8s/pkg/nginx/app"
 	"net/http"
+	"os"
 
 	"github.com/google/uuid"
 
@@ -91,7 +92,10 @@ func AddService(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.ServiceQueue, msgJson)
+
+	hostname , _ := os.Hostname()
+	que := fmt.Sprintf(message.ServiceQueue + "-%s", hostname)
+	p.Publish(que, msgJson)
 }
 
 func UpdateService(c *gin.Context) {
@@ -151,7 +155,10 @@ func DeleteService(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.ServiceQueue, msgJson)
+	
+	hostname , _ := os.Hostname()
+	que := fmt.Sprintf(message.ServiceQueue + "-%s", hostname)
+	p.Publish(que, msgJson)
 }
 
 func GetServiceStatus(c *gin.Context) {

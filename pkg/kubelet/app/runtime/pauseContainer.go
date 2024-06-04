@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"minik8s/pkg/apiobj"
+	apiserverutil "minik8s/pkg/kubelet/app/apiserverUtil"
 	"minik8s/pkg/kubelet/app/runtime/container"
 	"minik8s/pkg/kubelet/app/runtime/image"
 	"minik8s/pkg/minik8sTypes"
@@ -65,6 +66,8 @@ func CreatePauseContainer(pod *apiobj.Pod) (string, error) {
 		pod.Status.PodIP = res
 		fmt.Println("\nPodIP:" + pod.Status.PodIP)
 	}
+
+	apiserverutil.PodUpdate(pod)
 	return pauseId, nil
 }
 

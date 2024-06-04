@@ -47,6 +47,7 @@ func podMatchesService(pod *apiobj.Pod, service *apiobj.Service) bool {
 }
 
 func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
+	fmt.Println("handleServiceAdd")
 	var service apiobj.Service
 	if err := json.Unmarshal([]byte(msg.Content), &service); err != nil {
 		fmt.Println("Failed to unmarshal service:", err)
@@ -70,6 +71,7 @@ func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
 }
 
 func (kp *KubeProxy) handleServiceDelete(msg message.Message) {
+	fmt.Println("handleServiceDelete")
 	var service apiobj.Service
 	if err := json.Unmarshal([]byte(msg.Content), &service); err != nil {
 		fmt.Println("Failed to unmarshal service:", err)
@@ -161,8 +163,11 @@ func (kp *KubeProxy) Run() {
 	defer kp.ipvsManager.Close()
 	defer kp.dnsSubscriber.Close()
 
+	hostname, _ := os.Hostname()
+	svc_que := fmt.Sprintf(message.ServiceQueue+"-%s", hostname)
+	dns_que := fmt.Sprintf(message.DnsQueue+"-%s", hostname)
 	go func() {
-		kp.subscriber.Subscribe(message.ServiceQueue, func(d amqp.Delivery) {
+		kp.subscriber.Subscribe(svc_que, func(d amqp.Delivery) {
 			var msg message.Message
 			err := json.Unmarshal(d.Body, &msg)
 			if err != nil {
@@ -182,7 +187,7 @@ func (kp *KubeProxy) Run() {
 	}()
 
 	go func() {
-		kp.dnsSubscriber.Subscribe(message.DnsQueue, func(d amqp.Delivery) {
+		kp.dnsSubscriber.Subscribe(dns_que, func(d amqp.Delivery) {
 			var msg message.Message
 			err := json.Unmarshal(d.Body, &msg)
 			if err != nil {

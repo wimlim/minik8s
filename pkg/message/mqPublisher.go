@@ -35,7 +35,7 @@ func (p *Publisher) Publish(routingKey string, msg []byte) error {
 	if err != nil {
 		return err
 	}
-	err = ch.QueueBind(routingKey, routingKey, Queue2Exchange[routingKey], false, nil)
+	err = ch.QueueBind(routingKey, routingKey, DefaultExchange, false, nil)
 	if err != nil {
 		return err
 	}
