@@ -14,7 +14,7 @@ const (
 )
 
 var ServerMasterIP = ""
-var ServerDefaultPort = "8081"
+var ServerDefaultPort = 8081
 
 func init() {
 	// fmt.Println("serverConfig init")
