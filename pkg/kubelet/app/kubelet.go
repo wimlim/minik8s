@@ -9,6 +9,7 @@ import (
 	podmanager "minik8s/pkg/kubelet/app/podManager"
 	"minik8s/pkg/kubelet/app/status"
 	"minik8s/pkg/message"
+	"os"
 
 	"github.com/streadway/amqp"
 )
@@ -51,8 +52,12 @@ func (k *Kubelet) msgHandler(d amqp.Delivery) {
 func (k *Kubelet) listWatcher() {
 	s := message.NewSubscriber()
 	defer s.Close()
+
+	hostname, _ := os.Hostname()
+	que := fmt.Sprintf(message.PodQueue+"-%s", hostname)
+
 	for {
-		s.Subscribe(message.PodQueue, k.msgHandler)
+		s.Subscribe(que, k.msgHandler)
 	}
 }
 

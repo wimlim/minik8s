@@ -63,7 +63,9 @@ func addPod(msg message.Message) {
 	msgJson, _ := json.Marshal(msg_pub)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.PodQueue, msgJson)
+
+	que := fmt.Sprintf(message.PodQueue+"-%s", node.MetaData.Name)
+	p.Publish(que, msgJson)
 }
 
 func Run() {
