@@ -45,9 +45,9 @@ func (k *Kubelet) msgHandler(d amqp.Delivery) {
 		fmt.Println(pod.MetaData.Name)
 	} else if msg.Type == "Add" {
 		k.podManager.AddPod(&pod)
-		monitormanager.AddPodMonitor(&pod)
 		fmt.Println(pod.MetaData.Name)
 		apiserverutil.PodUpdate(&pod)
+		monitormanager.AddPodMonitor(&pod)
 	}
 }
 

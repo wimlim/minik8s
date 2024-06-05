@@ -12,4 +12,4 @@ spec:
       ports:
         - containerPort: 4335
 monitor:
-  metricsPort: ["8990"]
+  metricsPorts: ["8990"]
