@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"minik8s/pkg/apiobj"
 	"net"
+	"os/exec"
 	"syscall"
 
 	"github.com/moby/ipvs"
@@ -42,6 +43,11 @@ func (m *IPVSManager) AddService(serviceSpec apiobj.ServiceSpec, podIPs []string
 			m.AddRule(serviceSpec.ClusterIP, uint16(port.Port), podIP, uint16(port.TargetPort))
 		}
 	}
+	// bind ip to kube-proxy0
+	_, err := exec.Command("ip", "addr", "add", serviceSpec.ClusterIP+"/32", "dev", "kube-proxy0").CombinedOutput()
+	if err != nil {
+		fmt.Printf("Failed to bind ip to kube-proxy0: %v\n", err)
+	}
 }
 
 func (m *IPVSManager) DeleteService(serviceSpec apiobj.ServiceSpec) {
@@ -56,6 +62,11 @@ func (m *IPVSManager) DeleteService(serviceSpec apiobj.ServiceSpec) {
 		if err := m.handle.DelService(svc); err != nil {
 			fmt.Printf("Failed to delete IPVS service on port %d: %v\n", port.Port, err)
 		}
+	}
+	// unbind ip from kube-proxy0
+	_, err := exec.Command("ip", "addr", "del", serviceSpec.ClusterIP+"/32", "dev", "kube-proxy0").CombinedOutput()
+	if err != nil {
+		fmt.Printf("Failed to unbind ip from kube-proxy0: %v\n", err)
 	}
 }
 
