@@ -69,6 +69,7 @@ func (s *server) Bind() {
 	s.router.GET((apiconfig.URL_Node), handler.GetNode)
 	s.router.GET((apiconfig.URL_NodeAllPods), handler.GetNodePods)
 	s.router.GET((apiconfig.URL_NodeStatus), handler.GetNodeStatus)
+	s.router.PUT((apiconfig.URL_NodeStatus), handler.UpdateNodeStatus)
 	//POD
 	s.router.GET((apiconfig.URL_GlobalPods), handler.GetGlobalPods)
 	s.router.GET((apiconfig.URL_AllPods), handler.GetAllPods)

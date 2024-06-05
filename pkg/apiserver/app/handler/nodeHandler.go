@@ -94,3 +94,26 @@ func GetNodeStatus(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": string(res)})
 }
+
+func UpdateNodeStatus(c *gin.Context) {
+	fmt.Println("updateNodeStatus")
+
+	var nodeStatus apiobj.NodeStatus
+	c.ShouldBind(&nodeStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"/%s/%s", namespace, name)
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
+
+	var node apiobj.Node
+	json.Unmarshal([]byte(res), &node)
+	node.Status = nodeStatus
+
+	nodeJson, _ := json.Marshal(node)
+	etcd.EtcdKV.Put(key, nodeJson)
+	c.JSON(http.StatusOK, gin.H{"update": string(nodeJson)})
+}

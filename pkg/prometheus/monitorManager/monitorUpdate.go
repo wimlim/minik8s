@@ -21,8 +21,46 @@ func AddPodMonitorDataToFile(monitorData MonitorData) {
 	}
 }
 
+func AddNodeMonitorDataToFile(monitorData MonitorData) {
+	filename := NodeMonitorFilePath
+	data, err := readJSONFile(filename)
+	if err != nil {
+		fmt.Println("Error reading JSON file:", err)
+		return
+	}
+	data = append(data, monitorData)
+	err = writeJSONFile(filename, data)
+	if err != nil {
+		fmt.Println("Error writing JSON file:", err)
+		return
+	}
+}
+
 func RemovePodMonitorDataToFile(labels Labels) {
 	filename := PodMonitorFilePath
+	data, err := readJSONFile(filename)
+	if err != nil {
+		fmt.Println("Error reading JSON file:", err)
+		return
+	}
+	var filteredData []MonitorData
+	for _, monitorData := range data {
+		if monitorData.Labels.Name == labels.Name &&
+			monitorData.Labels.Namespace == labels.Namespace &&
+			monitorData.Labels.UID == labels.UID {
+			continue // 跳过需要删除的项
+		}
+		filteredData = append(filteredData, monitorData)
+	}
+	err = writeJSONFile(filename, filteredData)
+	if err != nil {
+		fmt.Println("Error writing JSON file:", err)
+		return
+	}
+}
+
+func RemoveNodeMonitorDataToFile(labels Labels) {
+	filename := NodeMonitorFilePath
 	data, err := readJSONFile(filename)
 	if err != nil {
 		fmt.Println("Error reading JSON file:", err)

@@ -10,6 +10,7 @@ import (
 	"minik8s/pkg/kubelet/app/status"
 	"minik8s/pkg/message"
 	monitormanager "minik8s/pkg/prometheus/monitorManager"
+	prometheusutil "minik8s/pkg/prometheus/prometheusUtil"
 
 	"github.com/streadway/amqp"
 )
@@ -60,6 +61,7 @@ func (k *Kubelet) listWatcher() {
 }
 
 func (k *Kubelet) Run() {
+	prometheusutil.StartPrometheusMetricsServer("10000")
 	status.Run(k.podCache)
 	k.listWatcher()
 }

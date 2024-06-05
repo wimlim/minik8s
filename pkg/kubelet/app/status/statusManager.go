@@ -7,16 +7,18 @@ import (
 	apiserverutil "minik8s/pkg/kubelet/app/apiserverUtil"
 	"minik8s/pkg/kubelet/app/cache"
 	"minik8s/pkg/kubelet/app/runtime"
+	prometheusutil "minik8s/pkg/prometheus/prometheusUtil"
 	"minik8s/tools/runner"
 	"time"
 )
 
 func pushNodeStatus() error {
 	// TODO 完成 Node Status 实现
-	// nodeStatus, err := GetNodeStatus()
-	// if err != nil {
-	// 	return err
-	// }
+	nodeStatus, err := GetNodeStatus()
+	if err != nil {
+		return err
+	}
+	prometheusutil.ExposeNodeStatusToPrometheus(nodeStatus)
 	return nil
 }
 
@@ -58,7 +60,7 @@ func updatePodStatusInCache(remotePodsMap map[string]*apiobj.Pod, c *cache.PodCa
 	if err != nil {
 		return err
 	}
-	
+
 	errInfo := ""
 
 	for localPodId, localPod := range localPodsMap {
