@@ -1,5 +1,5 @@
 def main(params):
     a = params["a"]
     b = params["b"]
-    c = a * b
+    c = a + b
     return {"result": c}

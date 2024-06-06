@@ -8,7 +8,6 @@ import (
 	"minik8s/pkg/config/serverlessconfig"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -57,7 +56,7 @@ func invokeHandler(cmd *cobra.Command, args []string) {
 	requ_body := event.RequBody
 
 	monitorFile(filePath, func_name, requ_body, triggerChan)
-	
+
 }
 
 func monitorFile(filePath string, func_name string, requ_body string, triggerChan <-chan bool) {
@@ -94,12 +93,12 @@ func sendRequest(func_name string, requ_body string) {
 	URL = URL + "/default/" + func_name
 
 	parts := strings.Split(requ_body, " ")
-	result := make(map[string]int)
+	result := make(map[string]string)
 	for _, part := range parts {
 		kv := strings.Split(part, ":")
 		if len(kv) == 2 {
 			key := strings.TrimSpace(kv[0])
-			value, _ := strconv.Atoi(strings.TrimSpace(kv[1]))
+			value := strings.TrimSpace(kv[1])
 			result[key] = value
 		}
 	}

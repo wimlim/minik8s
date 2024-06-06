@@ -1,4 +1,4 @@
 type: file
-filePath: /event
-funcName: funcadd
-requBody: a:1 b:2
+filePath: /mnt/datafiles/input
+funcName: funcmove
+requBody: src:/datafiles/input dst:/datafiles/output kind:jpg

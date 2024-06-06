@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Function
+metadata:
+  name: funcmove
+  namespace: default
+spec:
+  path: python/func3.py
