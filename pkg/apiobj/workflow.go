@@ -3,6 +3,7 @@ package apiobj
 const (
 	FunctionType = "Function"
 	ChoiceType   = "Choice"
+	EndNode      = "end"
 )
 
 type FuncNode struct {
