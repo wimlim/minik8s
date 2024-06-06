@@ -27,6 +27,7 @@ type HpaSpec struct {
 	Metrics        HpaMetric      `yaml:"metrics" json:"metrics"`
 	MinReplicas    int            `yaml:"minReplicas" json:"minReplicas"`
 	MaxReplicas    int            `yaml:"maxReplicas" json:"maxReplicas"`
+	ScaleRate      int            `yaml:"scaleRate" json:"scaleRate"`
 }
 
 type HpaStatus struct {

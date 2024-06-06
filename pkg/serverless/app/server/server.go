@@ -7,7 +7,6 @@ import (
 	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/serverlessconfig"
 	"minik8s/pkg/serverless/app/autoscaler"
-	"minik8s/pkg/serverless/app/workflow"
 	"minik8s/tools/runner"
 	"net/http"
 	"time"
@@ -46,7 +45,6 @@ func (s *server) Run() {
 
 	go runner.NewRunner().RunLoop(5*time.Second, 5*time.Second, s.FuncPodMapUpdateRoutine)
 	go s.fs.Run()
-	go workflow.Run()
 	s.Bind()
 	s.router.Run(fmt.Sprintf("%s:%d", s.ip, s.port))
 }
@@ -59,14 +57,14 @@ func (s *server) FunctionTrigger(c *gin.Context) {
 	pod_ips := s.funcPodMap[key]
 
 	if len(pod_ips) == 0 {
-		
+
 		s.fs.AddReplica(func_namespace, func_name, 1)
 
 		checkPodIPs := func() bool {
 			new_pod_ips := s.funcPodMap[key]
 			return len(new_pod_ips) > 0
 		}
-	
+
 		// 如果 pod_ips 为空，则添加 replica 并等待直到不为空
 		for !checkPodIPs() {
 			time.Sleep(1 * time.Second) // 等待一秒钟

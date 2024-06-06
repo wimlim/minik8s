@@ -8,6 +8,6 @@ spec:
   containers:
     - name: http-server-2
       image: python:3.9-alpine
-      command: []
+      command: ["python", "-m", "http.server", "4335"]
       ports:
         - containerPort: 4335

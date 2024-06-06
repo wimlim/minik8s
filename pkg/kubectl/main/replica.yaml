@@ -12,9 +12,11 @@ spec:
       name : pod-replica
       labels:
         app: replica-example  # Pod的标签
+        svc: example-service-3
     spec:
       containers:
-      - name: example-container
-        image: nginx:latest  # Pod中容器的镜像
-        ports:
-        - containerPort: 80  # 容器监听的端口
+        - name: http-server-2
+          image: python:3.9-alpine
+          command: ["python", "-m", "http.server", "4335"]
+          ports:
+            - containerPort: 4335

@@ -14,12 +14,15 @@ import (
 	"github.com/streadway/amqp"
 )
 
+var index int = -1
+
 func chooseNode() apiobj.Node {
 	nodes, err := apirequest.GetAllNodes()
 	if err != nil {
 		fmt.Println("Error getting nodes:", err)
 	}
-	return nodes[0]
+	index = (index + 1) % len(nodes)
+	return nodes[index]
 }
 
 func addPod(msg message.Message) {

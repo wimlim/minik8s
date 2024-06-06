@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Function
+metadata:
+  name: functhumbnail
+  namespace: default
+spec:
+  path: python/func2.py

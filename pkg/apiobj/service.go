@@ -1,5 +1,11 @@
 package apiobj
 
+const (
+	ServiceKind   = "Service"
+	TypeClusterIP = "ClusterIP"
+	TypeNodePort  = "NodePort"
+)
+
 type ServicePort struct {
 	Name       string `yaml:"name" json:"name"`
 	Protocol   string `yaml:"protocol" json:"protocol"`

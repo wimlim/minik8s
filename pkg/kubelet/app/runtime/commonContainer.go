@@ -229,6 +229,7 @@ func parseVolumeBinds(podVolumes []apiobj.Volume, containerVolumeMounts []apiobj
 		}
 		commonBinds = append(commonBinds, pV.HostPath.Path+":"+containerVolumeMount.MountPath)
 	}
+	commonBinds = append(commonBinds, "/etc/hosts:/etc/hosts")
 	return commonBinds, nil
 }
 

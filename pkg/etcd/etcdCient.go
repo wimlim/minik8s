@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	etcd "go.etcd.io/etcd/client/v3"
@@ -32,6 +33,10 @@ func (e *Etcd) Get(key string) ([]byte, error) {
 	resp, err := e.client.Get(context.TODO(), key)
 	if err != nil {
 		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		fmt.Println("key not found")
+		return nil, nil
 	}
 	return resp.Kvs[0].Value, nil
 }
