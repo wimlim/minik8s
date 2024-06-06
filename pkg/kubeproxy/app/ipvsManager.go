@@ -5,6 +5,7 @@ import (
 	"minik8s/pkg/apiobj"
 	"net"
 	"os/exec"
+	"strconv"
 	"syscall"
 
 	"github.com/moby/ipvs"
@@ -42,6 +43,15 @@ func (m *IPVSManager) AddService(serviceSpec apiobj.ServiceSpec, podIPs []string
 		for _, podIP := range podIPs {
 			m.AddRule(serviceSpec.ClusterIP, uint16(port.Port), podIP, uint16(port.TargetPort))
 		}
+		// add iptabel prerouting rule for nodeport
+		if serviceSpec.Type == apiobj.TypeNodePort {
+			dest := fmt.Sprintf("%s:%d", serviceSpec.ClusterIP, port.Port)
+			_, err := exec.Command("iptables", "-t", "nat", "-A", "PREROUTING", "-p", "tcp",
+				"--dport", strconv.Itoa(port.NodePort), "-j", "DNAT", "--to-destination", dest).CombinedOutput()
+			if err != nil {
+				fmt.Printf("Failed to add iptables prerouting rule for nodeport: %v\n", err)
+			}
+		}
 	}
 	// bind ip to kube-proxy0
 	_, err := exec.Command("ip", "addr", "add", serviceSpec.ClusterIP+"/32", "dev", "kube-proxy0").CombinedOutput()
@@ -61,6 +71,14 @@ func (m *IPVSManager) DeleteService(serviceSpec apiobj.ServiceSpec) {
 
 		if err := m.handle.DelService(svc); err != nil {
 			fmt.Printf("Failed to delete IPVS service on port %d: %v\n", port.Port, err)
+		}
+		// delete iptabel prerouting rule for nodeport
+		if serviceSpec.Type == apiobj.TypeNodePort {
+			_, err := exec.Command("iptables", "-t", "nat", "-D", "PREROUTING", "-p", "tcp",
+				"--dport", strconv.Itoa(port.NodePort), "-j", "DNAT", "--to-destination", serviceSpec.ClusterIP).CombinedOutput()
+			if err != nil {
+				fmt.Printf("Failed to delete iptables prerouting rule for nodeport: %v\n", err)
+			}
 		}
 	}
 	// unbind ip from kube-proxy0

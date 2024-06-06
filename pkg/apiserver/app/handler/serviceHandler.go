@@ -65,11 +65,7 @@ func AddService(c *gin.Context) {
 
 	service.MetaData.UID = uuid.New().String()[:16]
 
-	if service.Spec.Type == "ClusterIP" {
-		service.Spec.ClusterIP = serviceconfig.AllocateIp()
-	} else if service.Spec.Type == "NodePort" {
-		service.Spec.ClusterIP = "0.0.0.0"
-	}
+	service.Spec.ClusterIP = serviceconfig.AllocateIp()
 
 	// update nginx config
 	// nginxmanager.AddServiceIPVS(service.Spec)
