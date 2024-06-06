@@ -9,7 +9,6 @@ import (
 	podmanager "minik8s/pkg/kubelet/app/podManager"
 	"minik8s/pkg/kubelet/app/status"
 	"minik8s/pkg/message"
-	monitormanager "minik8s/pkg/prometheus/monitorManager"
 	prometheusutil "minik8s/pkg/prometheus/prometheusUtil"
 	"minik8s/tools/host"
 	"os"
@@ -45,13 +44,11 @@ func (k *Kubelet) msgHandler(d amqp.Delivery) {
 	json.Unmarshal([]byte(msg.Content), &pod)
 	if msg.Type == "Delete" {
 		k.podManager.DeletePod(&pod)
-		monitormanager.RemovePodMonitor(&pod)
 		fmt.Println(pod.MetaData.Name)
 	} else if msg.Type == "Add" {
 		k.podManager.AddPod(&pod)
 		fmt.Println(pod.MetaData.Name)
 		apiserverutil.PodUpdate(&pod)
-		monitormanager.AddPodMonitor(&pod)
 	}
 }
 
