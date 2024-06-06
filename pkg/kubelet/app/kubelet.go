@@ -12,6 +12,7 @@ import (
 	monitormanager "minik8s/pkg/prometheus/monitorManager"
 	prometheusutil "minik8s/pkg/prometheus/prometheusUtil"
 	"minik8s/tools/host"
+	"os"
 
 	"github.com/streadway/amqp"
 )
@@ -57,8 +58,12 @@ func (k *Kubelet) msgHandler(d amqp.Delivery) {
 func (k *Kubelet) listWatcher() {
 	s := message.NewSubscriber()
 	defer s.Close()
+
+	hostname, _ := os.Hostname()
+	que := fmt.Sprintf(message.PodQueue+"-%s", hostname)
+
 	for {
-		s.Subscribe(message.PodQueue, k.msgHandler)
+		s.Subscribe(que, k.msgHandler)
 	}
 }
 

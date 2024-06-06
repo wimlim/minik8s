@@ -149,7 +149,6 @@ func AddServiceIPVS(serviceSpec apiobj.ServiceSpec) {
 		}
 		if len(podIPs) == 0 {
 			fmt.Println("No pods match service selector")
-			return
 		}
 		// docker exec my-nginx-container ipvsadm -A -t
 		cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-A", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port), "-s", "rr")
@@ -159,11 +158,7 @@ func AddServiceIPVS(serviceSpec apiobj.ServiceSpec) {
 		}
 		for _, podIP := range podIPs {
 			// docker exec my-nginx-container ipvsadm -a -t
-			cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-a", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port), "-r", podIP+":"+fmt.Sprint(port.Port), "-m")
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				fmt.Printf("Error adding IPVS destination for pod %s on port %d: %v\nOutput: %s\n", podIP, port.Port, err, output)
-			}
+			AddServiceRule(serviceSpec.ClusterIP, uint16(port.Port), podIP, uint16(port.TargetPort))
 		}
 	}
 }
@@ -180,9 +175,27 @@ func podMatchesService(pod *apiobj.Pod, serviceSpec *apiobj.ServiceSpec) bool {
 
 func DeleteServiceIPVS(serviceSpec apiobj.ServiceSpec) {
 	// docker exec my-nginx-container ipvsadm -D -t <clusterIP>
-	cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-D", "-t", serviceSpec.ClusterIP)
+	for _, port := range serviceSpec.Ports {
+		cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-D", "-t", serviceSpec.ClusterIP+":"+fmt.Sprint(port.Port))
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			fmt.Println("Error deleting IPVS service:", err, output)
+		}
+	}
+}
+
+func AddServiceRule(svcIP string, svcPort uint16, podIP string, podPort uint16) {
+	cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-a", "-t", svcIP+":"+fmt.Sprint(svcPort), "-r", podIP+":"+fmt.Sprint(podPort), "-m")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Println("Error deleting IPVS service:", err, output)
+		fmt.Printf("Error adding IPVS destination for pod %s on port %d: %v\nOutput: %s\n", podIP, podPort, err, output)
+	}
+}
+
+func DeleteServiceRule(svcIP string, svcPort uint16, podIP string, podPort uint16) {
+	cmd := exec.Command("docker", "exec", "my-nginx-container", "ipvsadm", "-d", "-t", svcIP+":"+fmt.Sprint(svcPort), "-r", podIP+":"+fmt.Sprint(podPort))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Error deleting IPVS destination for pod %s on port %d: %v\nOutput: %s\n", podIP, podPort, err, output)
 	}
 }

@@ -5,7 +5,7 @@ metadata:
   namespace: default
 spec:
   selector:
-    app: myapp-2
+    svc: example-service-2
   ports:
     - name: http
       protocol: TCP

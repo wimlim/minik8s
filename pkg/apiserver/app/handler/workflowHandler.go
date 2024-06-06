@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
+	"minik8s/pkg/message"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -54,6 +55,15 @@ func AddWorkflow(c *gin.Context) {
 
 	etcd.EtcdKV.Put(key, workflowJson)
 	c.JSON(200, gin.H{"add": string(workflowJson)})
+
+	msg := message.Message{
+		Type:    "Workflow",
+		Content: string(workflowJson),
+	}
+	msgJson, _ := json.Marshal(msg)
+	pub := message.NewPublisher()
+	defer pub.Close()
+	pub.Publish(message.WorkflowQueue, msgJson)
 }
 
 func DeleteWorkflow(c *gin.Context) {
@@ -105,7 +115,7 @@ func UpdateWorkflowStatus(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdWorkflows+"/%s/%s", namespace, name)
 
-	res , err := etcd.EtcdKV.Get(key)
+	res, err := etcd.EtcdKV.Get(key)
 	if err != nil {
 		c.JSON(500, gin.H{"update": "fail"})
 	}

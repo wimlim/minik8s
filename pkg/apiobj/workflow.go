@@ -1,14 +1,24 @@
 package apiobj
 
+const (
+	FunctionType = "Function"
+	ChoiceType   = "Choice"
+)
+
 type FuncNode struct {
-	FuncNamespace string `yaml:"funcNamespace" json:"funcNamespace"`
-	FuncName      string `yaml:"funcName" json:"funcName"`
-	NextNodeName  string `yaml:"nextNodeName" json:"nextNodeName"`
+	FuncNameSpace string   `yaml:"funcNameSpace" json:"funcNameSpace"`
+	FuncName      string   `yaml:"funcName" json:"funcName"`
+	FuncParam     []string `yaml:"funcParam" json:"funcParam"`
+	NextNodeName  string   `yaml:"nextNodeName" json:"nextNodeName"`
 }
 
 type ChoiceNode struct {
-	TrueNodeName  string `yaml:"trueNodeName" json:"trueNodeName"`
-	FalseNodeName string `yaml:"falseNodeName" json:"falseNodeName"`
+	TrueNodeName    string                 `yaml:"trueNodeName" json:"trueNodeName"`
+	TrueEntryParam  map[string]interface{} `yaml:"trueEntryParam" json:"trueEntryParam"`
+	FalseNodeName   string                 `yaml:"falseNodeName" json:"falseNodeName"`
+	FalseEntryParam map[string]interface{} `yaml:"falseEntryParam" json:"falseEntryParam"`
+	ChoiceParam     string                 `yaml:"choiceParam" json:"choiceParam"`
+	Expression      string                 `yaml:"expression" json:"expression"`
 }
 
 type WorkflowNode struct {
@@ -19,9 +29,9 @@ type WorkflowNode struct {
 }
 
 type WorkflowSpec struct {
-	FirstNodeName string `yaml:"firstNodeName" json:"firstNodeName"`
-	FirstParams   string `yaml:"firstParams" json:"firstParams"`
-	Nodes         []Node `yaml:"nodes" json:"nodes"`
+	EntryName     string                 `yaml:"entryName" json:"entryName"`
+	EntryParam    map[string]interface{} `yaml:"entryParam" json:"entryParam"`
+	WorkflowNodes []WorkflowNode         `yaml:"workflowNodes" json:"workflowNodes"`
 }
 
 type WorkflowStatus struct {
@@ -29,10 +39,10 @@ type WorkflowStatus struct {
 }
 
 type Workflow struct {
-	ApiVersion string       `yaml:"apiVersion" json:"apiVersion"`
-	Kind       string       `yaml:"kind" json:"kind"`
-	MetaData   MetaData     `yaml:"metadata" json:"metadata"`
-	Spec       WorkflowSpec `yaml:"spec" json:"spec"`
+	ApiVersion string         `yaml:"apiVersion" json:"apiVersion"`
+	Kind       string         `yaml:"kind" json:"kind"`
+	MetaData   MetaData       `yaml:"metadata" json:"metadata"`
+	Spec       WorkflowSpec   `yaml:"spec" json:"spec"`
 	Status     WorkflowStatus `yaml:"status" json:"status"`
 }
 

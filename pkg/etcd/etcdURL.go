@@ -12,4 +12,6 @@ const (
 
 	PATH_EtcdFunctions = "/registry/functions"
 	PATH_EtcdWorkflows = "/registry/workflows"
+	PATH_EtcdPVs       = "/registry/pvs"
+	PATH_EtcdPVCs      = "/registry/pvcs"
 )

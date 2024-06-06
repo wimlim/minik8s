@@ -130,6 +130,20 @@ func (s *server) Bind() {
 	s.router.PUT((apiconfig.URL_Workflow), handler.UpdateWorkflow)
 	s.router.GET((apiconfig.URL_Workflow), handler.GetWorkflow)
 	s.router.PUT((apiconfig.URL_WorkflowStatus), handler.UpdateWorkflowStatus)
+	//PV
+	s.router.GET((apiconfig.URL_GlobalPVs), handler.GetGlobalPVs)
+	s.router.GET((apiconfig.URL_AllPVs), handler.GetAllPVs)
+	s.router.POST((apiconfig.URL_PV), handler.AddPV)
+	s.router.DELETE((apiconfig.URL_PV), handler.DeletePV)
+	s.router.PUT((apiconfig.URL_PV), handler.UpdatePV)
+	s.router.GET((apiconfig.URL_PV), handler.GetPV)
+	//PVC
+	s.router.GET((apiconfig.URL_GlobalPVCs), handler.GetGlobalPVCs)
+	s.router.GET((apiconfig.URL_AllPVCs), handler.GetAllPVCs)
+	s.router.POST((apiconfig.URL_PVC), handler.AddPVC)
+	s.router.DELETE((apiconfig.URL_PVC), handler.DeletePVC)
+	s.router.PUT((apiconfig.URL_PVC), handler.UpdatePVC)
+	s.router.GET((apiconfig.URL_PVC), handler.GetPVC)
 
 	fmt.Println("server bind success")
 }

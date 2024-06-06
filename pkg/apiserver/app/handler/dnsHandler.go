@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/message"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -72,7 +73,10 @@ func AddDns(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.DnsQueue, msgJson)
+
+	hostname, _ := os.Hostname()
+	que := fmt.Sprintf(message.DnsQueue+"-%s", hostname)
+	p.Publish(que, msgJson)
 }
 
 func DeleteDns(c *gin.Context) {
@@ -107,7 +111,10 @@ func DeleteDns(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.DnsQueue, msgJson)
+
+	hostname, _ := os.Hostname()
+	que := fmt.Sprintf(message.DnsQueue+"-%s", hostname)
+	p.Publish(que, msgJson)
 }
 
 func UpdateDns(c *gin.Context) {
@@ -155,7 +162,7 @@ func GetDnsStatus(c *gin.Context) {
 
 func UpdateDnsStatus(c *gin.Context) {
 	fmt.Println("updateDnsStatus")
-	
+
 	var dnsStatus apiobj.DnsStatus
 	c.ShouldBind(&dnsStatus)
 	namespace := c.Param("namespace")
@@ -169,7 +176,7 @@ func UpdateDnsStatus(c *gin.Context) {
 	var dns apiobj.Dns
 	json.Unmarshal([]byte(res), &dns)
 	dns.Status = dnsStatus
-	
+
 	dnsJson, _ := json.Marshal(dns)
 	etcd.EtcdKV.Put(key, dnsJson)
 	c.JSON(200, gin.H{"update": string(dnsJson)})

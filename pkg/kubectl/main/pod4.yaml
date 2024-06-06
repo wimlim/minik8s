@@ -1,13 +1,19 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: http-server2
-  labels:
-    app: myapp2
+  name: mysql-pod
 spec:
   containers:
-    - name: http-server2
-      image: python:3.9-alpine
-      command: ["python", "-m", "http.server", "4335"]
+    - name: mysql
+      image: mysql:8.0
       ports:
-        - containerPort: 4335
+        - containerPort: 3306
+      env:
+        MYSQL_ALLOW_EMPTY_PASSWORD : yes
+      volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+  volumes:
+    - name: mysql-storage
+      persistentVolumeClaim:
+        claimName: my-pvc

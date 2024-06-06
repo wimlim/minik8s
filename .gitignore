@@ -6,6 +6,7 @@ bin-release/
 
 # Other files and folders
 pkg/nginx/default.conf
+pkg/kubectl/main/main
 .settings/
 
 # Executables

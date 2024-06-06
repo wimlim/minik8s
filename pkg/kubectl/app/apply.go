@@ -65,6 +65,10 @@ func applyHandler(cmd *cobra.Command, args []string) {
 		return
 	case "Workflow":
 		apiObject = &apiobj.Workflow{}
+	case "PV":
+		apiObject = &apiobj.PV{}
+	case "PVC":
+		apiObject = &apiobj.PVC{}
 	}
 
 	applyApiObject(content, apiObject)
@@ -73,7 +77,7 @@ func applyApiObject(content []byte, apiObject apiobj.ApiObject) {
 
 	err := yaml.Unmarshal(content, apiObject)
 	if err != nil {
-		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())
+		fmt.Printf("unmarshal %s error %s\n", apiObject.GetKind(), err.Error())
 		return
 	}
 	if apiObject.GetNamespace() == "" {
