@@ -7,7 +7,13 @@ WORKDIR /app
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
-# Download and install any required Go modules
+# Manually copy the dependencies from your local machine
+COPY go.mod go.sum ./
+
+# Use a proxy to download the dependencies
+ENV GOPROXY=https://goproxy.io,direct
+
+# Build the Go app
 RUN go mod tidy
 
 # Build the Go app

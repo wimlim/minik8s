@@ -15,7 +15,7 @@ func AddNodeMonitor(node *apiobj.Node) {
 		Targets: targets,
 		Labels:  labels,
 	}
-	AddPodMonitorDataToFile(monitorData)
+	AddNodeMonitorDataToFile(monitorData)
 }
 
 func RemoveNodeMonitor(node *apiobj.Node) {
@@ -24,5 +24,5 @@ func RemoveNodeMonitor(node *apiobj.Node) {
 		Namespace: node.MetaData.Namespace,
 		UID:       node.MetaData.UID,
 	}
-	RemovePodMonitorDataToFile(labels)
+	RemoveNodeMonitorDataToFile(labels)
 }
