@@ -7,6 +7,7 @@ import (
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
 	nginxmanager "minik8s/pkg/nginx/app"
+	monitormanager "minik8s/pkg/prometheus/monitorManager"
 	"net/http"
 	"os"
 
@@ -166,6 +167,8 @@ func DeletePod(c *gin.Context) {
 	p := message.NewPublisher()
 	defer p.Close()
 
+	monitormanager.RemovePodMonitor(&pod)
+
 	podQue := fmt.Sprintf(message.PodQueue+"-%s", pod.Spec.NodeName)
 	p.Publish(podQue, msgJson)
 
@@ -235,6 +238,10 @@ func UpdatePod(c *gin.Context) {
 	}
 
 	etcd.EtcdKV.Put(key, podJson)
+
+	if pod.Status.PodIP != "" && old_pod.Status.PodIP == "" {
+		monitormanager.AddPodMonitor(&pod)
+	}
 
 	//service handle
 	if pod.MetaData.Labels["svc"] != "" && pod.Status.PodIP != "" && old_pod.Status.PodIP == "" {
@@ -337,7 +344,7 @@ func UpdatePodStatus(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
-	if res == nil{
+	if res == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 		return
 	}

@@ -10,7 +10,6 @@ import (
 	"minik8s/pkg/kubelet/app/status"
 	"minik8s/pkg/message"
 	prometheusutil "minik8s/pkg/prometheus/prometheusUtil"
-	"minik8s/tools/host"
 	"os"
 
 	"github.com/streadway/amqp"
@@ -27,9 +26,11 @@ type KubeletInterface interface {
 }
 
 func NewKubelet() *Kubelet {
+	newHostNode := getHostNodeConfig()
 	newPodManager := podmanager.NewPodManager()
 	newPodCache := cache.NewPodCache()
 	return &Kubelet{
+		hostNode:   newHostNode,
 		podManager: newPodManager,
 		podCache:   newPodCache,
 	}
@@ -66,26 +67,20 @@ func (k *Kubelet) listWatcher() {
 
 func (k *Kubelet) Run() {
 	prometheusutil.StartPrometheusMetricsServer("10000")
-	status.Run(k.podCache, k.hostNode)
 	k.listWatcher()
-	k.getHostNodeConfig()
+	status.Run(k.podCache, k.hostNode)
 }
 
-func (k *Kubelet) getHostNodeConfig() {
+func getHostNodeConfig() *apiobj.Node {
 	allNodes, err := apiserverutil.GetAllNodes()
 	if err != nil {
 		fmt.Println("err:" + err.Error())
 	}
-	hostIP, err := host.GetHostIP()
-	if err != nil {
-		fmt.Println("err:" + err.Error())
-	}
+	hostname, _ := os.Hostname()
 	for _, node := range allNodes {
-		if node.IP == hostIP {
-			k.hostNode = &node
+		if node.MetaData.Name == hostname {
+			return &node
 		}
 	}
-	if k.hostNode == nil {
-		fmt.Println("err:Node has not been registered in Master")
-	}
+	return nil
 }
