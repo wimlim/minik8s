@@ -74,8 +74,9 @@ func (m *IPVSManager) DeleteService(serviceSpec apiobj.ServiceSpec) {
 		}
 		// delete iptabel prerouting rule for nodeport
 		if serviceSpec.Type == apiobj.TypeNodePort {
+			dest := fmt.Sprintf("%s:%d", serviceSpec.ClusterIP, port.Port)
 			_, err := exec.Command("iptables", "-t", "nat", "-D", "PREROUTING", "-p", "tcp",
-				"--dport", strconv.Itoa(port.NodePort), "-j", "DNAT", "--to-destination", serviceSpec.ClusterIP).CombinedOutput()
+				"--dport", strconv.Itoa(port.NodePort), "-j", "DNAT", "--to-destination", dest).CombinedOutput()
 			if err != nil {
 				fmt.Printf("Failed to delete iptables prerouting rule for nodeport: %v\n", err)
 			}
