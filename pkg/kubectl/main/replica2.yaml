@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ReplicaSet
+metadata:
+  name: example-replicaset-2
+spec:
+  replicas: 3  # 指定要运行的Pod副本数量
+  selector:
+    matchLabels:
+      app: replica-example  # 匹配要管理的Pod的标签
+  template:
+    metadata:
+      name : pod-replica
+      labels:
+        app: replica-example  # Pod的标签
+        svc: example-service
+    spec:
+      containers:
+        - name: http-server
+          image: python:3.9-alpine
+          command: ["python", "-m", "http.server", "4335"]
+          ports:
+            - containerPort: 4335

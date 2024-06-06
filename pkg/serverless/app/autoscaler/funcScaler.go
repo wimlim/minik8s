@@ -1,6 +1,7 @@
 package autoscaler
 
 import (
+	"bytes"
 	"fmt"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/apirequest"
@@ -95,6 +96,15 @@ func (fs *FuncScaler) func_routine() {
 					fs.recordMap[key] = record
 
 				}
+			}
+
+			if fs.CheckFuncUpdate(fs.funcMap[key], f) {
+				fs.Deletefunc(fs.funcMap[key])
+				fs.Addfunc(f)
+				fs.funcMap[key] = f
+				fmt.Println("update function")
+			}else{
+				fs.funcMap[key] = f
 			}
 
 		}
@@ -232,4 +242,8 @@ func (fs *FuncScaler) Deletefunc(f apiobj.Function) {
 	URL = strings.Replace(URL, ":name", f.MetaData.Name+"-replica", -1)
 
 	apirequest.DeleteRequest(URL)
+}
+
+func (fs *FuncScaler) CheckFuncUpdate (f1 apiobj.Function, f2 apiobj.Function) bool {
+	return !bytes.Equal(f1.Spec.Content, f2.Spec.Content)
 }

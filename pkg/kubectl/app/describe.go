@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/apirequest"
 	"minik8s/pkg/config/apiconfig"
 	"net/http"
 	"strings"
@@ -52,7 +53,8 @@ func describeHandler(cmd *cobra.Command, args []string) {
 	case "Pod":
 		apiObject = &apiobj.Pod{}
 	case "Service":
-		apiObject = &apiobj.Service{}
+		describeService(content)
+		return
 	case "ReplicaSet":
 		apiObject = &apiobj.ReplicaSet{}
 	case "Hpa":
@@ -111,7 +113,6 @@ func describeApiObject(content []byte, apiObject apiobj.ApiObject) {
 		return
 	}
 	data := res["data"].(string)
-	fmt.Println(data)
 	err = json.Unmarshal([]byte(data), apiObject)
 	if err != nil {
 		fmt.Printf("unmarshal %s error\n", apiObject.GetKind())
@@ -124,4 +125,57 @@ func describeApiObject(content []byte, apiObject apiobj.ApiObject) {
 		return
 	}
 	fmt.Println(string(podJson))
+}
+
+func describeService(content []byte) {
+	var service apiobj.Service
+	err := yaml.Unmarshal(content, &service)
+	if err != nil {
+		fmt.Println("unmarshal service error")
+		return
+	}
+
+	URL := apiconfig.URL_Service
+	URL = strings.Replace(URL, ":namespace", "default", -1)
+	URL = strings.Replace(URL, ":name", service.MetaData.Name, -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+
+	fmt.Println("Get " + HttpUrl)
+
+	response, err := http.Get(HttpUrl)
+	if err != nil {
+		fmt.Printf("get service error")
+		return
+	}
+	defer response.Body.Close()
+
+	var res map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&res)
+	if err != nil {
+		fmt.Printf("decode service error\n")
+		return
+	}
+	data := res["data"].(string)
+	err = json.Unmarshal([]byte(data), &service)
+	if err != nil {
+		fmt.Printf("unmarshal sevice error\n")
+		return
+	}
+
+	fmt.Printf("name:\n"+"\t%s\n", service.MetaData.Name)
+	fmt.Printf("selector:\n"+"\tsvc:%s\n", service.Spec.Selector["svc"])
+	fmt.Printf("vip:\n"+"\t%s\n", service.Spec.ClusterIP)
+	fmt.Printf("ports(Port/TargetPort/NodePort):\n")
+	for _, port := range service.Spec.Ports {
+		fmt.Printf("\t%d/%d/%d\n", port.Port, port.TargetPort, port.NodePort)
+	}
+	fmt.Printf("endpoints:\n")
+	pods, _ := apirequest.GetAllPods()
+	for _, pod := range pods {
+		if pod.MetaData.Labels["svc"] == service.Spec.Selector["svc"] {
+			if pod.Status.PodIP != "" {
+				fmt.Printf("\t%s\n", pod.Status.PodIP)
+			}
+		}
+	}
 }

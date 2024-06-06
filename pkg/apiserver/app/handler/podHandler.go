@@ -170,7 +170,7 @@ func DeletePod(c *gin.Context) {
 	p.Publish(podQue, msgJson)
 
 	// service handle
-	if pod.MetaData.Labels["svc"] != ""  && pod.Status.PodIP != ""{
+	if pod.MetaData.Labels["svc"] != "" && pod.Status.PodIP != "" {
 		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["svc"])
 		res, _ := etcd.EtcdKV.Get(svcKey)
 		var svc apiobj.Service
@@ -225,6 +225,10 @@ func UpdatePod(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
 
+	var old_pod apiobj.Pod
+	res, _ := etcd.EtcdKV.Get(key)
+	json.Unmarshal([]byte(res), &old_pod)
+
 	podJson, err := json.Marshal(pod)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
@@ -233,7 +237,7 @@ func UpdatePod(c *gin.Context) {
 	etcd.EtcdKV.Put(key, podJson)
 
 	//service handle
-	if pod.MetaData.Labels["svc"] != "" && pod.Status.PodIP != "" {
+	if pod.MetaData.Labels["svc"] != "" && pod.Status.PodIP != "" && old_pod.Status.PodIP == "" {
 		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["svc"])
 		res, err := etcd.EtcdKV.Get(svcKey)
 		if err != nil {
@@ -332,6 +336,10 @@ func UpdatePodStatus(c *gin.Context) {
 	res, err := etcd.EtcdKV.Get(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
+	if res == nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+		return
 	}
 
 	var pod apiobj.Pod

@@ -24,7 +24,7 @@ func NewReplicaController() *ReplicaController {
 
 func (rc *ReplicaController) Run() {
 	rr := runner.NewRunner()
-	rr.RunLoop(10*time.Second, 10*time.Second, rc.update_replica_pod)
+	rr.RunLoop(5*time.Second, 10*time.Second, rc.update_replica_pod)
 }
 
 func (rc *ReplicaController) update_replica_pod() {
@@ -57,6 +57,7 @@ func (rc *ReplicaController) update_replica_pod() {
 		}
 	}
 
+	fmt.Println("total pods num:", len(pods))
 	for _, replicaset := range replicasets {
 		var num = 0
 		var replica_pods []apiobj.Pod
@@ -66,7 +67,12 @@ func (rc *ReplicaController) update_replica_pod() {
 				// fmt.Printf("key:%s value:%s pod value:%s\n", key, value,pod.MetaData.Labels[key])
 				if pod.MetaData.Labels[key] == value {
 					num++
-					replica_pods = append(replica_pods, pod)
+					if !CheckContainerState(pod) {
+						fmt.Println("replica delete pod:", pod.MetaData.Name)
+						rc.DeleteReplica([]apiobj.Pod{pod}, 1)
+					} else {
+						replica_pods = append(replica_pods, pod)
+					}
 				}
 			}
 		}
@@ -104,6 +110,7 @@ func (rc *ReplicaController) AddReplica(podTemplate apiobj.PodTemplateSpec, num 
 
 	for i := 0; i < num; i++ {
 		pod.MetaData.Name = oldPodName + "-" + uuid.New().String()[:16]
+		fmt.Println("replica add pod:", pod.MetaData.Name)
 		for id := range oldContainerName {
 			pod.Spec.Containers[id].Name = oldContainerName[id] + "-" + uuid.New().String()[:16]
 		}
@@ -125,6 +132,7 @@ func (rc *ReplicaController) DeleteReplica(existPods []apiobj.Pod, num int) erro
 
 	url := apiconfig.URL_Pod
 	url = apiconfig.GetApiServerUrl() + url
+
 	for i := 0; i < num; i++ {
 
 		pod := existPods[i]
@@ -137,4 +145,13 @@ func (rc *ReplicaController) DeleteReplica(existPods []apiobj.Pod, num int) erro
 		apirequest.DeleteRequest(url)
 	}
 	return nil
+}
+
+func CheckContainerState(pod apiobj.Pod) bool {
+	for _, containerState := range pod.Status.ContainerState {
+		if !containerState.Running {
+			return false
+		}
+	}
+	return true
 }

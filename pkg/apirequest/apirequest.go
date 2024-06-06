@@ -32,7 +32,7 @@ func GetAllPods() ([]apiobj.Pod, error) {
 	}
 
 	if res["data"] == nil {
-		fmt.Println("empty pod list")
+		// fmt.Println("empty pod list")
 		return []apiobj.Pod{}, nil
 	}
 
@@ -130,7 +130,7 @@ func GetAllReplicaSets() ([]apiobj.ReplicaSet, error) {
 	}
 
 	if res["data"] == nil {
-		fmt.Println("empty replica set list")
+		// fmt.Println("empty replica set list")
 		return []apiobj.ReplicaSet{}, err
 	}
 
@@ -180,7 +180,7 @@ func GetAllHpas() ([]apiobj.Hpa, error) {
 	}
 
 	if res["data"] == nil {
-		fmt.Println("empty hpa list")
+		// fmt.Println("empty hpa list")
 		return []apiobj.Hpa{}, err
 	}
 
@@ -230,7 +230,7 @@ func GetAllFunctions () ([]apiobj.Function, error) {
 	}
 
 	if res["data"] == nil {
-		fmt.Println("empty function list")
+		// fmt.Println("empty function list")
 		return []apiobj.Function{}, err
 	}
 
