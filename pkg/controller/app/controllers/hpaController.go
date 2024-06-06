@@ -24,7 +24,7 @@ func NewHpaController() *HpaController {
 
 func (hc *HpaController) Run() {
 	rr := runner.NewRunner()
-	rr.RunLoop(5*time.Second, 20*time.Second, hc.update_hpa_pod)
+	rr.RunLoop(5*time.Second, 10*time.Second, hc.update_hpa_pod)
 }
 
 func (hc *HpaController) update_hpa_pod() {
@@ -174,7 +174,7 @@ func (hc *HpaController) HpaDeletePod(existPods []apiobj.Pod, num int) {
 	url := apiconfig.URL_Pod
 	url = apiconfig.GetApiServerUrl() + url
 	for i := 0; i < num; i++ {
-		pod := existPods[num - 1 - i]
+		pod := existPods[num-1-i]
 		url = strings.Replace(url, ":namespace", pod.MetaData.Namespace, -1)
 		url = strings.Replace(url, ":name", pod.MetaData.Name, -1)
 		apirequest.DeleteRequest(url)
@@ -183,68 +183,36 @@ func (hc *HpaController) HpaDeletePod(existPods []apiobj.Pod, num int) {
 
 func (hc *HpaController) getTargetReplicas(cur_num int, hpa apiobj.Hpa, podCpuUsage float64, podMemUsage float64) int {
 
-	var targetReplicas = 0
-
-	var targetCpuPercent = hpa.Spec.Metrics.CpuMetric.Target
-	var targetMemPercent = hpa.Spec.Metrics.MemMetric.Target
-
-	var cpuMaxReplicas int
-	var memMaxReplicas int
-
-	if podCpuUsage == 0 && podMemUsage > 0 {
-		cpuMaxReplicas = hpa.Spec.MaxReplicas
-		memMaxReplicas = int(targetMemPercent / float64(podMemUsage))
-	} else if podCpuUsage > 0 && podMemUsage == 0 {
-		cpuMaxReplicas = int(targetCpuPercent / float64(podCpuUsage))
-		memMaxReplicas = hpa.Spec.MaxReplicas
-	} else if podCpuUsage == 0 && podMemUsage == 0 {
-		return hpa.Spec.ScaleRate
-	} else {
-		cpuMaxReplicas = int(targetCpuPercent / float64(podCpuUsage))
-		memMaxReplicas = int(targetMemPercent / float64(podMemUsage))
+	
+	cpu_final_num := cur_num
+	mem_final_num := cur_num
+	if podCpuUsage > hpa.Spec.Metrics.CpuMetric.Target {
+		cpu_final_num = cur_num + hpa.Spec.ScaleRate
+	}else if podCpuUsage <= hpa.Spec.Metrics.CpuMetric.Target {
+		cpu_final_num = cur_num - hpa.Spec.ScaleRate
 	}
 
-	if cpuMaxReplicas < memMaxReplicas {
-		if cur_num < cpuMaxReplicas {
-			if cur_num < cpuMaxReplicas-hpa.Spec.ScaleRate {
-				targetReplicas = cur_num + hpa.Spec.ScaleRate
-			} else {
-				targetReplicas = cpuMaxReplicas
-			}
-		} else if cur_num > cpuMaxReplicas {
-			if cur_num > cpuMaxReplicas+hpa.Spec.ScaleRate {
-				targetReplicas = cur_num - hpa.Spec.ScaleRate
-			} else {
-				targetReplicas = cpuMaxReplicas
-			}
-		} else {
-			targetReplicas = cpuMaxReplicas
-		}
-	} else {
-		if cur_num < memMaxReplicas {
-			if cur_num < memMaxReplicas-hpa.Spec.ScaleRate {
-				targetReplicas = cur_num + hpa.Spec.ScaleRate
-			} else {
-				targetReplicas = memMaxReplicas
-			}
-		} else if cur_num > memMaxReplicas {
-			if cur_num > memMaxReplicas+hpa.Spec.ScaleRate {
-				targetReplicas = cur_num - hpa.Spec.ScaleRate
-			} else {
-				targetReplicas = memMaxReplicas
-			}
-		} else {
-			targetReplicas = memMaxReplicas
-		}
+	if podMemUsage > hpa.Spec.Metrics.MemMetric.Target {
+		mem_final_num = cur_num + hpa.Spec.ScaleRate
+	}else if podMemUsage <= hpa.Spec.Metrics.MemMetric.Target {
+		mem_final_num = cur_num - hpa.Spec.ScaleRate
 	}
 
-	if targetReplicas < hpa.Spec.MinReplicas {
-		targetReplicas = hpa.Spec.MinReplicas
-	} else if targetReplicas > hpa.Spec.MaxReplicas {
-		targetReplicas = hpa.Spec.MaxReplicas
+	var final_num = 0
+	if cpu_final_num > mem_final_num {
+		final_num = cpu_final_num
+	}else {
+		final_num = mem_final_num
+	}
+	
+	if final_num < hpa.Spec.MinReplicas {
+		final_num = hpa.Spec.MinReplicas
+	}
+	if final_num > hpa.Spec.MaxReplicas {
+		final_num = hpa.Spec.MaxReplicas
 	}
 
-	return targetReplicas
+	return final_num
 }
 
 func (hc *HpaController) getPodCpuUsage(pods []apiobj.Pod) float64 {

@@ -34,8 +34,6 @@ func StartWorkflow(w *apiobj.Workflow) {
 	for curNode != nil {
 		switch curNode.Type {
 		case apiobj.FunctionType:
-			fmt.Println("curNode: ", curNode)
-			fmt.Println("curParam: ", curParam)
 			for {
 				result, err = execFuncNode(curNode, curParam)
 				if err == nil {
@@ -43,27 +41,32 @@ func StartWorkflow(w *apiobj.Workflow) {
 				}
 				time.Sleep(3 * time.Second)
 			}
-			curNode = findNodeByName(nodebase, curNode.FuncNode.NextNodeName)
-			if curNode == nil {
-				fmt.Println("result: ", result)
+			if curNode.FuncNode.NextNodeName == apiobj.EndNode {
 				fmt.Println("End of workflow")
 				return
 			}
+			curNode = findNodeByName(nodebase, curNode.FuncNode.NextNodeName)
 			if curNode.Type == apiobj.FunctionType {
 				curParam = findParam(curNode.FuncNode.FuncParam, result)
 			}
 		case apiobj.ChoiceType:
-			fmt.Println("curNode: ", curNode)
-			fmt.Println("curParam: ", curParam)
 			flag, err = execChoiceNode(curNode, result)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 			if flag {
+				if curNode.ChoiceNode.TrueNodeName == apiobj.EndNode {
+					fmt.Println("End of workflow")
+					return
+				}
 				curParam = fillParam(curNode.ChoiceNode.TrueEntryParam, result)
 				curNode = findNodeByName(nodebase, curNode.ChoiceNode.TrueNodeName)
 			} else {
+				if curNode.ChoiceNode.FalseNodeName == apiobj.EndNode {
+					fmt.Println("End of workflow")
+					return
+				}
 				curParam = fillParam(curNode.ChoiceNode.FalseEntryParam, result)
 				curNode = findNodeByName(nodebase, curNode.ChoiceNode.FalseNodeName)
 			}
@@ -72,9 +75,6 @@ func StartWorkflow(w *apiobj.Workflow) {
 }
 
 func findNodeByName(nodes []apiobj.WorkflowNode, name string) *apiobj.WorkflowNode {
-	if name == "end" {
-		return nil
-	}
 	for _, node := range nodes {
 		if node.Name == name {
 			return &node
@@ -141,6 +141,8 @@ func execChoiceNode(node *apiobj.WorkflowNode, param map[string]interface{}) (bo
 	fmt.Println("Execute ", node.Name)
 	exprStr := node.ChoiceNode.Expression
 	// replace the expression with actual values
+	fmt.Println(node)
+	fmt.Println(param)
 	for key, value := range param {
 		if valueStr, ok := value.(string); ok {
 			exprStr = strings.Replace(exprStr, "$"+key, valueStr, -1)

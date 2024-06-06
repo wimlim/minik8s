@@ -8,9 +8,10 @@ import (
 	"minik8s/pkg/config/serverlessconfig"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
 )
@@ -21,28 +22,48 @@ var invokeCmd = &cobra.Command{
 	Run:   invokeHandler,
 }
 
-// invoke filepath funcname body
-func invokeHandler(cmd *cobra.Command, args []string) {
-	filePath := args[0]  // 替换为您要监控的文件路径
-	func_name := args[1] // 替换为您要发送的请求体
-	requ_body := args[2] // 替换为您要发送的请求体
-	stopChan := make(chan bool)
-	triggerChan := make(chan bool)
-
-	go monitorFile(filePath, func_name, requ_body, stopChan, triggerChan)
-
-	time.Sleep(60 * time.Second)
-	stopChan <- true
+type Event struct {
+	Type     string `yaml:"type" json:"type"`
+	FilePath string `yaml:"filePath" json:"filePath"`
+	FuncName string `yaml:"funcName" json:"funcName"`
+	RequBody string `yaml:"requBody" json:"requBody"`
 }
 
-func monitorFile(filePath string, func_name string, requ_body string, stopChan, triggerChan <-chan bool) {
+// invoke filepath funcname body
+func invokeHandler(cmd *cobra.Command, args []string) {
+	fd, err := os.Open(args[0])
+	if err != nil {
+		fmt.Println("open file error")
+		return
+	}
+	defer fd.Close()
+	content, err := io.ReadAll(fd)
+	if err != nil {
+		fmt.Println("read file error")
+		return
+	}
+
+	var event Event
+	err = yaml.Unmarshal(content, &event)
+	if err != nil {
+		fmt.Println("unmarshal error")
+		return
+	}
+	triggerChan := make(chan bool)
+
+	filePath := event.FilePath
+	func_name := event.FuncName
+	requ_body := event.RequBody
+
+	monitorFile(filePath, func_name, requ_body, triggerChan)
+
+}
+
+func monitorFile(filePath string, func_name string, requ_body string, triggerChan <-chan bool) {
 	lastModTime := getLastModifiedTime(filePath)
 
 	for {
 		select {
-		case <-stopChan:
-			fmt.Println("Stopping file monitoring.")
-			return
 		case <-triggerChan:
 			fmt.Println("Triggering request manually.")
 			sendRequest(func_name, requ_body)
@@ -72,12 +93,12 @@ func sendRequest(func_name string, requ_body string) {
 	URL = URL + "/default/" + func_name
 
 	parts := strings.Split(requ_body, " ")
-	result := make(map[string]int)
+	result := make(map[string]string)
 	for _, part := range parts {
 		kv := strings.Split(part, ":")
 		if len(kv) == 2 {
 			key := strings.TrimSpace(kv[0])
-			value, _ := strconv.Atoi(strings.TrimSpace(kv[1]))
+			value := strings.TrimSpace(kv[1])
 			result[key] = value
 		}
 	}

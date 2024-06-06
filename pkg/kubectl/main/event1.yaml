@@ -1,0 +1,4 @@
+type: file
+filePath: /mnt/datafiles/input
+funcName: funcmove
+requBody: src:/datafiles/input dst:/datafiles/output kind:jpg
