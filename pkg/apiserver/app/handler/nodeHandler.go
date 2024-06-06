@@ -45,11 +45,11 @@ func DeleteNode(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"/%s", name)
 
-	res , _ := etcd.EtcdKV.Get(key)
+	res, _ := etcd.EtcdKV.Get(key)
 	var node apiobj.Node
 	json.Unmarshal([]byte(res), &node)
 	monitormanager.RemoveNodeMonitor(&node)
-	
+
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"delete": "fail"})
@@ -109,10 +109,9 @@ func UpdateNodeStatus(c *gin.Context) {
 
 	var nodeStatus apiobj.NodeStatus
 	c.ShouldBind(&nodeStatus)
-	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"/%s/%s", namespace, name)
+	key := fmt.Sprintf(etcd.PATH_EtcdNodes+"/%s", name)
 	res, err := etcd.EtcdKV.Get(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
