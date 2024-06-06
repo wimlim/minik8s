@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/message"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,6 +47,24 @@ func AddDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
+
+	for id, path := range dns.Spec.Paths {
+		svc_name := path.ServiceName
+		svc_key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, svc_name)
+
+		var svc apiobj.Service
+		svcJson, _ := etcd.EtcdKV.Get(svc_key)
+		if svcJson == nil {
+			c.JSON(500, gin.H{"svc": "not found"})
+			return
+		}
+		json.Unmarshal(svcJson, &svc)
+
+		fmt.Println(svc.Spec.ClusterIP)
+		path.ServiceIp = svc.Spec.ClusterIP
+		dns.Spec.Paths[id] = path
+	}
+
 	// add server block
 	nginxmanager.AddServerBlock(dns.Spec.Host, dns.Spec.Paths)
 
@@ -74,9 +91,15 @@ func AddDns(c *gin.Context) {
 	p := message.NewPublisher()
 	defer p.Close()
 
-	hostname, _ := os.Hostname()
-	que := fmt.Sprintf(message.DnsQueue+"-%s", hostname)
-	p.Publish(que, msgJson)
+	nodeKey := etcd.PATH_EtcdNodes
+	resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+	for _, item := range resList {
+		var node apiobj.Node
+		json.Unmarshal([]byte(item), &node)
+		que := fmt.Sprintf(message.DnsQueue+"-%s", node.MetaData.Name)
+		p.Publish(que, msgJson)
+	}
 }
 
 func DeleteDns(c *gin.Context) {
@@ -112,9 +135,15 @@ func DeleteDns(c *gin.Context) {
 	p := message.NewPublisher()
 	defer p.Close()
 
-	hostname, _ := os.Hostname()
-	que := fmt.Sprintf(message.DnsQueue+"-%s", hostname)
-	p.Publish(que, msgJson)
+	nodeKey := etcd.PATH_EtcdNodes
+	resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+	for _, item := range resList {
+		var node apiobj.Node
+		json.Unmarshal([]byte(item), &node)
+		que := fmt.Sprintf(message.DnsQueue+"-%s", node.MetaData.Name)
+		p.Publish(que, msgJson)
+	}
 }
 
 func UpdateDns(c *gin.Context) {

@@ -3,7 +3,7 @@ kind: Pod
 metadata:
   name: pod-hpa-example
   labels:
-    app: hpa-example
+    svc: hpa-example
 spec:
   containers:
   - name: nginx
