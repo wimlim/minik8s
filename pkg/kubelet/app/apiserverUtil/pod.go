@@ -63,3 +63,27 @@ func PodStatusUpdate(podIdentifier minik8sTypes.PodIdentifier, podStatus *apiobj
 func GetAllRemotePods() ([]apiobj.Pod, error) {
 	return apirequest.GetAllPods()
 }
+
+func NodeStatusUpdate(nodeStatus apiobj.NodeStatus, hostNode *apiobj.Node) {
+	URL := apiconfig.URL_NodeStatus
+	URL = strings.Replace(URL, ":namespace", hostNode.GetNamespace(), -1)
+	URL = strings.Replace(URL, ":name", hostNode.GetName(), -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+	jsonData, err := json.Marshal(nodeStatus)
+	if err != nil {
+		fmt.Println("marshal node error")
+		return
+	}
+	req, err := http.NewRequest(http.MethodPut, HttpUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("create put request error:", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Println("put error:", err)
+		return
+	}
+	defer response.Body.Close()
+}

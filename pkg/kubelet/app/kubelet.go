@@ -11,11 +11,13 @@ import (
 	"minik8s/pkg/message"
 	monitormanager "minik8s/pkg/prometheus/monitorManager"
 	prometheusutil "minik8s/pkg/prometheus/prometheusUtil"
+	"minik8s/tools/host"
 
 	"github.com/streadway/amqp"
 )
 
 type Kubelet struct {
+	hostNode   *apiobj.Node
 	podManager *podmanager.PodManager
 	podCache   *cache.PodCache
 }
@@ -62,6 +64,26 @@ func (k *Kubelet) listWatcher() {
 
 func (k *Kubelet) Run() {
 	prometheusutil.StartPrometheusMetricsServer("10000")
-	status.Run(k.podCache)
+	status.Run(k.podCache, k.hostNode)
 	k.listWatcher()
+	k.getHostNodeConfig()
+}
+
+func (k *Kubelet) getHostNodeConfig() {
+	allNodes, err := apiserverutil.GetAllNodes()
+	if err != nil {
+		fmt.Println("err:" + err.Error())
+	}
+	hostIP, err := host.GetHostIP()
+	if err != nil {
+		fmt.Println("err:" + err.Error())
+	}
+	for _, node := range allNodes {
+		if node.IP == hostIP {
+			k.hostNode = &node
+		}
+	}
+	if k.hostNode == nil {
+		fmt.Println("err:Node has not been registered in Master")
+	}
 }

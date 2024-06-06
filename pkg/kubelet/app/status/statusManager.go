@@ -12,13 +12,14 @@ import (
 	"time"
 )
 
-func pushNodeStatus() error {
+func pushNodeStatus(n *apiobj.Node) error {
 	// TODO 完成 Node Status 实现
 	nodeStatus, err := GetNodeStatus()
 	if err != nil {
 		return err
 	}
 	prometheusutil.ExposeNodeStatusToPrometheus(nodeStatus)
+	apiserverutil.NodeStatusUpdate(*nodeStatus, n)
 	return nil
 }
 
@@ -96,10 +97,10 @@ func updatePodStatusInCache(remotePodsMap map[string]*apiobj.Pod, c *cache.PodCa
 	return nil
 }
 
-func Run(c *cache.PodCache) {
+func Run(c *cache.PodCache, n *apiobj.Node) {
 	r := runner.NewRunner()
 	runPushNodeStatus := func() {
-		err := pushNodeStatus()
+		err := pushNodeStatus(n)
 		if err != nil {
 			fmt.Println("error: " + err.Error())
 		}
