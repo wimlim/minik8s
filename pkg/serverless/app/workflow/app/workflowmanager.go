@@ -34,8 +34,6 @@ func StartWorkflow(w *apiobj.Workflow) {
 	for curNode != nil {
 		switch curNode.Type {
 		case apiobj.FunctionType:
-			fmt.Println("curNode: ", curNode)
-			fmt.Println("curParam: ", curParam)
 			for {
 				result, err = execFuncNode(curNode, curParam)
 				if err == nil {
@@ -52,8 +50,6 @@ func StartWorkflow(w *apiobj.Workflow) {
 				curParam = findParam(curNode.FuncNode.FuncParam, result)
 			}
 		case apiobj.ChoiceType:
-			fmt.Println("curNode: ", curNode)
-			fmt.Println("curParam: ", curParam)
 			flag, err = execChoiceNode(curNode, result)
 			if err != nil {
 				fmt.Println(err)
@@ -145,6 +141,8 @@ func execChoiceNode(node *apiobj.WorkflowNode, param map[string]interface{}) (bo
 	fmt.Println("Execute ", node.Name)
 	exprStr := node.ChoiceNode.Expression
 	// replace the expression with actual values
+	fmt.Println(node)
+	fmt.Println(param)
 	for key, value := range param {
 		if valueStr, ok := value.(string); ok {
 			exprStr = strings.Replace(exprStr, "$"+key, valueStr, -1)

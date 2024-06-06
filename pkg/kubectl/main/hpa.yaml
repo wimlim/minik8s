@@ -14,9 +14,9 @@ spec:
       name: hpa-pod
   metrics:
     cpu:
-      target: 0.001  # 目标值为 50% 的 CPU 利用率，转换为小数形式即为 0.5
+      target: 0.001  # 目标值为 0.01 的 CPU 利用率，转换为小数形式即为 0.5
     mem:
-      target: 0.01  # 目标值为 80% 的内存利用率，转换为小数形式即为 0.8
+      target: 0.01  # 目标值为 0.01 的内存利用率，转换为小数形式即为 0.8
   minReplicas: 1
   maxReplicas: 5
-  scaleRate: 2  # 每次扩容或缩容的比例
+  scaleRate: 2  # 每次扩容或缩容的replica数量

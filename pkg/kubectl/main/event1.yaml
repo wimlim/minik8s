@@ -1,0 +1,4 @@
+type: file
+filePath: /event
+funcName: funcadd
+requBody: a:1 b:2

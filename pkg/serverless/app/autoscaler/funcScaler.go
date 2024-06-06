@@ -216,10 +216,27 @@ func (fs *FuncScaler) Addfunc(f apiobj.Function) {
 									ContainerPort: 8080,
 								},
 							},
+							VolumeMounts: []apiobj.VolumeMount{
+								{
+									Name:      "func",
+									MountPath: "/datafiles",
+								},
+							},
+						},
+					},
+					Volumes: []apiobj.Volume{
+						{
+							Name: "func",
+							HostPath: apiobj.HostPath{
+								Path: "/mnt/datafiles",
+							},
 						},
 					},
 				},
 			},
+			
+			
+
 		},
 	}
 

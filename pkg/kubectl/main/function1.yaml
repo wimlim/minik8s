@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Function
 metadata:
-  name: funcadd
+  name: funcfind
   namespace: default
 spec:
-  path: python/funcadd.py
+  path: python/func1.py
