@@ -19,7 +19,7 @@ func pushNodeStatus(n *apiobj.Node) error {
 		return err
 	}
 	prometheusutil.ExposeNodeStatusToPrometheus(nodeStatus)
-	apiserverutil.NodeStatusUpdate(*nodeStatus, n)
+	// apiserverutil.NodeStatusUpdate(*nodeStatus, n)
 	return nil
 }
 
