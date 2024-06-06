@@ -113,7 +113,7 @@ func (r *Registry) BuildImage(f apiobj.Function) {
 	if err != nil {
 		fmt.Println("Create dockerfile error:", err)
 	}
-	Dockerfile.WriteString("FROM server_base:latest\n")
+	Dockerfile.WriteString("FROM 10.119.13.134:5000/server_base:latest\n")
 	Dockerfile.WriteString("COPY func.py /app/\n")
 	Dockerfile.Close()
 
