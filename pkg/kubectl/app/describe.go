@@ -56,7 +56,8 @@ func describeHandler(cmd *cobra.Command, args []string) {
 		describeService(content)
 		return
 	case "ReplicaSet":
-		apiObject = &apiobj.ReplicaSet{}
+		describeReplicaSet(content)
+		return
 	case "Hpa":
 		apiObject = &apiobj.Hpa{}
 	case "Dns":
@@ -178,4 +179,29 @@ func describeService(content []byte) {
 			}
 		}
 	}
+}
+
+func describeReplicaSet(content []byte) {
+	var replicaSet apiobj.ReplicaSet
+	err := yaml.Unmarshal(content, &replicaSet)
+	if err != nil {
+		fmt.Println("unmarshal replicaSet error")
+		return
+	}
+	fmt.Printf("name:\n"+"\t%s\n", replicaSet.MetaData.Name)
+	fmt.Printf("selector:\n"+"\tapp:%s\n", replicaSet.Spec.Selector.MatchLabels["app"])
+	fmt.Printf("replicas:\n"+"\t%d\n", replicaSet.Spec.Replicas)
+
+	fmt.Printf("pods:\n")
+	pods, _ := apirequest.GetAllPods()
+	for _, pod := range pods {
+		for key, value := range replicaSet.Spec.Selector.MatchLabels {
+			if pod.MetaData.Labels[key] == value {
+				if pod.Status.PodIP != "" {
+					fmt.Printf("\t%s\n", pod.Status.PodIP)
+				}
+			}
+		}
+	}
+
 }
