@@ -66,9 +66,9 @@ func (k *Kubelet) listWatcher() {
 }
 
 func (k *Kubelet) Run() {
+	status.Run(k.podCache, k.hostNode)
 	prometheusutil.StartPrometheusMetricsServer("10000")
 	k.listWatcher()
-	status.Run(k.podCache, k.hostNode)
 }
 
 func getHostNodeConfig() *apiobj.Node {

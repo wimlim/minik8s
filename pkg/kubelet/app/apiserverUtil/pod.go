@@ -66,7 +66,6 @@ func GetAllRemotePods() ([]apiobj.Pod, error) {
 
 func NodeStatusUpdate(nodeStatus apiobj.NodeStatus, hostNode *apiobj.Node) {
 	URL := apiconfig.URL_NodeStatus
-	URL = strings.Replace(URL, ":namespace", hostNode.GetNamespace(), -1)
 	URL = strings.Replace(URL, ":name", hostNode.GetName(), -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
 	jsonData, err := json.Marshal(nodeStatus)
