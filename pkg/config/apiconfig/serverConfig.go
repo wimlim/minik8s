@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -16,9 +17,16 @@ const (
 var ServerMasterIP = ""
 var ServerDefaultPort = 8080
 
+type NodeConfig struct {
+	ApiServerIP    string `yaml:"apiServerIP"`
+	ApiServerPort  int    `yaml:"apiServerPort"`
+	ServerlessIP   string `yaml:"serverlessIP"`
+	ServerlessPort int    `yaml:"serverlessPort"`
+}
+
 func init() {
 	// fmt.Println("serverConfig init")
-	fd, err := os.Open("/apiserver.txt")
+	fd, err := os.Open("/config.yaml")
 	if err != nil {
 		fmt.Println("open masterip.txt error")
 		return
@@ -31,13 +39,10 @@ func init() {
 		return
 	}
 
-	ip_port := strings.Split(string(content), ":")
-	ServerMasterIP = ip_port[0]
-	_, err = fmt.Sscanf(ip_port[1], "%d", &ServerDefaultPort)
-	if err != nil {
-		fmt.Println("parse port error")
-		return
-	}
+	var nodeConfig NodeConfig
+	_ = yaml.Unmarshal(content, &nodeConfig)
+	ServerMasterIP = nodeConfig.ApiServerIP
+	ServerDefaultPort = nodeConfig.ApiServerPort
 }
 
 func GetMasterIP() string {
