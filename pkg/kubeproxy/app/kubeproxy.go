@@ -8,6 +8,7 @@ import (
 	"minik8s/pkg/apirequest"
 	"minik8s/pkg/message"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/streadway/amqp"
@@ -46,6 +47,7 @@ func podMatchesService(pod *apiobj.Pod, service *apiobj.Service) bool {
 }
 
 func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
+	fmt.Println("handleServiceAdd")
 	var service apiobj.Service
 	if err := json.Unmarshal([]byte(msg.Content), &service); err != nil {
 		fmt.Println("Failed to unmarshal service:", err)
@@ -65,15 +67,11 @@ func (kp *KubeProxy) handleServiceAdd(msg message.Message) {
 		}
 	}
 
-	if len(podIPs) == 0 {
-		fmt.Println("No pods match service selector")
-		return
-	}
-
 	kp.ipvsManager.AddService(service.Spec, podIPs)
 }
 
 func (kp *KubeProxy) handleServiceDelete(msg message.Message) {
+	fmt.Println("handleServiceDelete")
 	var service apiobj.Service
 	if err := json.Unmarshal([]byte(msg.Content), &service); err != nil {
 		fmt.Println("Failed to unmarshal service:", err)
@@ -84,6 +82,32 @@ func (kp *KubeProxy) handleServiceDelete(msg message.Message) {
 }
 
 func (kp *KubeProxy) handleServiceUpdate(msg message.Message) {
+	fmt.Println("handleServiceUpdate")
+	var svc apiobj.PodSvcMsg
+	err := json.Unmarshal([]byte(msg.Content), &svc)
+	if err != nil {
+		fmt.Println("Failed to unmarshal service message:", err)
+		return
+	}
+	// iterate svcports & podports
+	switch msg.Name {
+	case "Add":
+		for i, svcport := range svc.SvcPorts {
+			podport := svc.PodPorts[i]
+			// add ipvs rule
+			isvcport, _ := strconv.Atoi(svcport)
+			ipodport, _ := strconv.Atoi(podport)
+			kp.ipvsManager.AddRule(svc.SvcIp, uint16(isvcport), svc.PodIp, uint16(ipodport))
+		}
+	case "Delete":
+		for i, svcport := range svc.SvcPorts {
+			podport := svc.PodPorts[i]
+			// delete ipvs rule
+			isvcport, _ := strconv.Atoi(svcport)
+			ipodport, _ := strconv.Atoi(podport)
+			kp.ipvsManager.DeleteRule(svc.SvcIp, uint16(isvcport), svc.PodIp, uint16(ipodport))
+		}
+	}
 }
 
 func (kp *KubeProxy) handleDNSAdd(msg message.Message) {
@@ -139,8 +163,11 @@ func (kp *KubeProxy) Run() {
 	defer kp.ipvsManager.Close()
 	defer kp.dnsSubscriber.Close()
 
+	hostname, _ := os.Hostname()
+	svc_que := fmt.Sprintf(message.ServiceQueue+"-%s", hostname)
+	dns_que := fmt.Sprintf(message.DnsQueue+"-%s", hostname)
 	go func() {
-		kp.subscriber.Subscribe(message.ServiceQueue, func(d amqp.Delivery) {
+		kp.subscriber.Subscribe(svc_que, func(d amqp.Delivery) {
 			var msg message.Message
 			err := json.Unmarshal(d.Body, &msg)
 			if err != nil {
@@ -160,7 +187,7 @@ func (kp *KubeProxy) Run() {
 	}()
 
 	go func() {
-		kp.dnsSubscriber.Subscribe(message.DnsQueue, func(d amqp.Delivery) {
+		kp.dnsSubscriber.Subscribe(dns_que, func(d amqp.Delivery) {
 			var msg message.Message
 			err := json.Unmarshal(d.Body, &msg)
 			if err != nil {

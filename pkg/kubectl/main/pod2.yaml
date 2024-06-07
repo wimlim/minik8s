@@ -3,11 +3,11 @@ kind: Pod
 metadata:
   name: http-server-2
   labels:
-    app: myapp-2
+    svc: example-service-2
 spec:
   containers:
     - name: http-server-2
       image: python:3.9-alpine
-      command: []
+      command: ["python", "-m", "http.server", "4335"]
       ports:
         - containerPort: 4335

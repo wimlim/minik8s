@@ -9,6 +9,7 @@ const (
 	RabbitMQUser        = "ling"
 	RabbitMQPassword    = "123456"
 	RabbitMQDefaultPort = 5672
+	DefaultExchange     = "minik8s"
 )
 
 func RabbitMQURL() string {
@@ -24,6 +25,7 @@ const (
 	PodQueue      = "podQueue"
 	ServiceQueue  = "serviceQueue"
 	DnsQueue      = "dnsQueue"
+	WorkflowQueue = "workflowQueue"
 )
 
 var Queue2Exchange = map[string]string{
@@ -31,4 +33,5 @@ var Queue2Exchange = map[string]string{
 	PodQueue:      "minik8s",
 	ServiceQueue:  "minik8s",
 	DnsQueue:      "minik8s",
+	WorkflowQueue: "minik8s",
 }

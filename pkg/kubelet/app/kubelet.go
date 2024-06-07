@@ -1,44 +1,42 @@
 package app
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"minik8s/pkg/apiobj"
-	"minik8s/pkg/config/apiconfig"
-	"minik8s/pkg/kubelet/app/runtime"
+	apiserverutil "minik8s/pkg/kubelet/app/apiserverUtil"
+	"minik8s/pkg/kubelet/app/cache"
+	podmanager "minik8s/pkg/kubelet/app/podManager"
+	"minik8s/pkg/kubelet/app/status"
 	"minik8s/pkg/message"
-	"net/http"
-	"strings"
+	prometheusutil "minik8s/pkg/prometheus/prometheusUtil"
+	"os"
 
 	"github.com/streadway/amqp"
 )
 
-func PodUpdate(pod *apiobj.Pod) {
-	URL := apiconfig.URL_Pod
-	URL = strings.Replace(URL, ":namespace", pod.MetaData.Namespace, -1)
-	URL = strings.Replace(URL, ":name", pod.MetaData.Name, -1)
-	HttpUrl := apiconfig.GetApiServerUrl() + URL
-	jsonData, err := json.Marshal(pod)
-	if err != nil {
-		fmt.Println("marshal pod error")
-		return
-	}
-	req, err := http.NewRequest(http.MethodPut, HttpUrl, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Println("create put request error:", err)
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println("put error:", err)
-		return
-	}
-	defer response.Body.Close()
+type Kubelet struct {
+	hostNode   *apiobj.Node
+	podManager *podmanager.PodManager
+	podCache   *cache.PodCache
 }
 
-func msgHandler(d amqp.Delivery) {
+type KubeletInterface interface {
+	Run()
+}
+
+func NewKubelet() *Kubelet {
+	newHostNode := getHostNodeConfig()
+	newPodManager := podmanager.NewPodManager()
+	newPodCache := cache.NewPodCache()
+	return &Kubelet{
+		hostNode:   newHostNode,
+		podManager: newPodManager,
+		podCache:   newPodCache,
+	}
+}
+
+func (k *Kubelet) msgHandler(d amqp.Delivery) {
 	fmt.Println(string(d.Body))
 	var msg message.Message
 	json.Unmarshal(d.Body, &msg)
@@ -46,19 +44,43 @@ func msgHandler(d amqp.Delivery) {
 	var pod apiobj.Pod
 	json.Unmarshal([]byte(msg.Content), &pod)
 	if msg.Type == "Delete" {
-		runtime.DeletePod(&pod)
+		k.podManager.DeletePod(&pod)
 		fmt.Println(pod.MetaData.Name)
 	} else if msg.Type == "Add" {
-		runtime.CreatePod(&pod)
+		k.podManager.AddPod(&pod)
 		fmt.Println(pod.MetaData.Name)
-		PodUpdate(&pod)
+		apiserverutil.PodUpdate(&pod)
 	}
 }
 
-func Run() {
+func (k *Kubelet) listWatcher() {
 	s := message.NewSubscriber()
 	defer s.Close()
+
+	hostname, _ := os.Hostname()
+	que := fmt.Sprintf(message.PodQueue+"-%s", hostname)
+
 	for {
-		s.Subscribe(message.PodQueue, msgHandler)
+		s.Subscribe(que, k.msgHandler)
 	}
+}
+
+func (k *Kubelet) Run() {
+	status.Run(k.podCache, k.hostNode)
+	prometheusutil.StartPrometheusMetricsServer("10000")
+	k.listWatcher()
+}
+
+func getHostNodeConfig() *apiobj.Node {
+	allNodes, err := apiserverutil.GetAllNodes()
+	if err != nil {
+		fmt.Println("err:" + err.Error())
+	}
+	hostname, _ := os.Hostname()
+	for _, node := range allNodes {
+		if node.MetaData.Name == hostname {
+			return &node
+		}
+	}
+	return nil
 }

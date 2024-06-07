@@ -47,6 +47,24 @@ func AddDns(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
+
+	for id, path := range dns.Spec.Paths {
+		svc_name := path.ServiceName
+		svc_key := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, svc_name)
+
+		var svc apiobj.Service
+		svcJson, _ := etcd.EtcdKV.Get(svc_key)
+		if svcJson == nil {
+			c.JSON(500, gin.H{"svc": "not found"})
+			return
+		}
+		json.Unmarshal(svcJson, &svc)
+
+		fmt.Println(svc.Spec.ClusterIP)
+		path.ServiceIp = svc.Spec.ClusterIP
+		dns.Spec.Paths[id] = path
+	}
+
 	// add server block
 	nginxmanager.AddServerBlock(dns.Spec.Host, dns.Spec.Paths)
 
@@ -72,7 +90,16 @@ func AddDns(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.DnsQueue, msgJson)
+
+	nodeKey := etcd.PATH_EtcdNodes
+	resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+	for _, item := range resList {
+		var node apiobj.Node
+		json.Unmarshal([]byte(item), &node)
+		que := fmt.Sprintf(message.DnsQueue+"-%s", node.MetaData.Name)
+		p.Publish(que, msgJson)
+	}
 }
 
 func DeleteDns(c *gin.Context) {
@@ -107,7 +134,16 @@ func DeleteDns(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.DnsQueue, msgJson)
+
+	nodeKey := etcd.PATH_EtcdNodes
+	resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+	for _, item := range resList {
+		var node apiobj.Node
+		json.Unmarshal([]byte(item), &node)
+		que := fmt.Sprintf(message.DnsQueue+"-%s", node.MetaData.Name)
+		p.Publish(que, msgJson)
+	}
 }
 
 func UpdateDns(c *gin.Context) {
@@ -151,4 +187,26 @@ func GetDnsStatus(c *gin.Context) {
 		c.JSON(500, gin.H{"get": "fail"})
 	}
 	c.JSON(200, gin.H{"data": string(res)})
+}
+
+func UpdateDnsStatus(c *gin.Context) {
+	fmt.Println("updateDnsStatus")
+
+	var dnsStatus apiobj.DnsStatus
+	c.ShouldBind(&dnsStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	key := fmt.Sprintf(etcd.PATH_EtcdDns+"/%s/%s", namespace, name)
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(500, gin.H{"get": "fail"})
+	}
+	var dns apiobj.Dns
+	json.Unmarshal([]byte(res), &dns)
+	dns.Status = dnsStatus
+
+	dnsJson, _ := json.Marshal(dns)
+	etcd.EtcdKV.Put(key, dnsJson)
+	c.JSON(200, gin.H{"update": string(dnsJson)})
 }

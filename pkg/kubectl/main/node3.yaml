@@ -1,0 +1,5 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: minik8s14-3
+ip: 10.119.13.180

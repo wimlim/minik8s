@@ -6,7 +6,10 @@ import (
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
+	nginxmanager "minik8s/pkg/nginx/app"
+	monitormanager "minik8s/pkg/prometheus/monitorManager"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -48,7 +51,72 @@ func AddPod(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
-	pod.MetaData.UID = uuid.New().String()
+	pod.MetaData.UID = uuid.New().String()[:16]
+
+	//pv pvc handle
+	if len(pod.Spec.Volumes) > 0 && pod.Spec.Volumes[0].HostPath.Path == "" {
+
+		if pod.Spec.Volumes[0].PersistentVolumeClaim.ClaimName != "" {
+			pvcKey := fmt.Sprintf(etcd.PATH_EtcdPVCs+"/%s/%s", namespace, pod.Spec.Volumes[0].PersistentVolumeClaim.ClaimName)
+			pvcRes, _ := etcd.EtcdKV.Get(pvcKey)
+			var pvc apiobj.PVC
+			json.Unmarshal([]byte(pvcRes), &pvc)
+
+			pvKey := fmt.Sprintf(etcd.PATH_EtcdPVs+"/%s", namespace)
+			pvList, err := etcd.EtcdKV.GetPrefix(pvKey)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+			}
+			var pvs []apiobj.PV
+			for _, item := range pvList {
+				var pv apiobj.PV
+				json.Unmarshal([]byte(item), &pv)
+				pvs = append(pvs, pv)
+			}
+
+			var pvExist = false
+			for _, pv := range pvs {
+				if pv.Spec.StorageClassName == pvc.Spec.StorageClassName {
+					mntPath := apiobj.NfsMntPath
+					newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.Name)
+					pod.Spec.Volumes[0].HostPath.Path = newPath
+					pvExist = true
+					break
+				}
+			}
+
+			if !pvExist {
+				pv := apiobj.PV{
+					APIVersion: "v1",
+					Kind:       "PV",
+					MetaData: apiobj.MetaData{
+						Name:      pod.MetaData.Name + "-pv",
+						Namespace: pod.MetaData.Namespace,
+						UID:       uuid.New().String()[:16],
+					},
+					Spec: apiobj.PVSpec{
+						StorageClassName: pvc.Spec.StorageClassName,
+					},
+				}
+
+				mntPath := apiobj.NfsMntPath
+				newPath := fmt.Sprintf("%s/%s", mntPath, pv.MetaData.Name)
+
+				err = os.Mkdir(newPath, 0755)
+				if err != nil {
+					fmt.Println(err)
+				}
+				pod.Spec.Volumes[0].HostPath.Path = newPath
+
+				pvKey := fmt.Sprintf(etcd.PATH_EtcdPVs+"/%s/%s", pv.MetaData.Namespace, pv.MetaData.Name)
+				pvJson, _ := json.Marshal(pv)
+				etcd.EtcdKV.Put(pvKey, pvJson)
+
+			}
+
+		}
+
+	}
 
 	podJson, err := json.Marshal(pod)
 	if err != nil {
@@ -68,6 +136,9 @@ func AddPod(c *gin.Context) {
 	p := message.NewPublisher()
 	defer p.Close()
 	p.Publish(message.ScheduleQueue, msgJson)
+
+	//replicaset handle
+
 }
 
 func DeletePod(c *gin.Context) {
@@ -77,6 +148,8 @@ func DeletePod(c *gin.Context) {
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
 
 	res, _ := etcd.EtcdKV.Get(key)
+	var pod apiobj.Pod
+	json.Unmarshal([]byte(res), &pod)
 
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
@@ -93,7 +166,57 @@ func DeletePod(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.PodQueue, msgJson)
+
+	monitormanager.RemovePodMonitor(&pod)
+
+	podQue := fmt.Sprintf(message.PodQueue+"-%s", pod.Spec.NodeName)
+	p.Publish(podQue, msgJson)
+
+	// service handle
+	if pod.MetaData.Labels["svc"] != "" && pod.Status.PodIP != "" {
+		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["svc"])
+		res, _ := etcd.EtcdKV.Get(svcKey)
+		var svc apiobj.Service
+		json.Unmarshal([]byte(res), &svc)
+
+		var svcports []string
+		var podports []string
+		for _, port := range svc.Spec.Ports {
+			svcports = append(svcports, fmt.Sprintf("%d", port.Port))
+			podports = append(podports, fmt.Sprintf("%d", port.TargetPort))
+			// update nginx config
+			nginxmanager.DeleteServiceRule(svc.Spec.ClusterIP, uint16(port.Port), pod.Status.PodIP, uint16(port.TargetPort))
+		}
+
+		svcMsg := apiobj.PodSvcMsg{
+			SvcIp:    svc.Spec.ClusterIP,
+			SvcPorts: svcports,
+			PodIp:    pod.Status.PodIP,
+			PodPorts: podports,
+		}
+
+		svcMsgJson, _ := json.Marshal(svcMsg)
+		msg := message.Message{
+			Type:    "Update",
+			URL:     svcKey,
+			Name:    "Delete",
+			Content: string(svcMsgJson),
+		}
+		msgJson, _ := json.Marshal(msg)
+		p := message.NewPublisher()
+		defer p.Close()
+
+		nodeKey := etcd.PATH_EtcdNodes
+		resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+		for _, item := range resList {
+			var node apiobj.Node
+			json.Unmarshal([]byte(item), &node)
+			que := fmt.Sprintf(message.ServiceQueue+"-%s", node.MetaData.Name)
+			p.Publish(que, msgJson)
+		}
+
+	}
 }
 
 func UpdatePod(c *gin.Context) {
@@ -105,14 +228,74 @@ func UpdatePod(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
 
+	var old_pod apiobj.Pod
+	res, _ := etcd.EtcdKV.Get(key)
+	json.Unmarshal([]byte(res), &old_pod)
+
 	podJson, err := json.Marshal(pod)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
 	}
 
 	etcd.EtcdKV.Put(key, podJson)
-	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
 
+	if pod.Status.PodIP != "" && old_pod.Status.PodIP == "" {
+		monitormanager.AddPodMonitor(&pod)
+	}
+
+	//service handle
+	if pod.MetaData.Labels["svc"] != "" && pod.Status.PodIP != "" && old_pod.Status.PodIP == "" {
+		svcKey := fmt.Sprintf(etcd.PATH_EtcdServices+"/%s/%s", namespace, pod.MetaData.Labels["svc"])
+		res, err := etcd.EtcdKV.Get(svcKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+			fmt.Println("no service")
+			return
+		}
+		var svc apiobj.Service
+		json.Unmarshal([]byte(res), &svc)
+
+		var svcports []string
+		var podports []string
+		for _, port := range svc.Spec.Ports {
+			svcports = append(svcports, fmt.Sprintf("%d", port.Port))
+			podports = append(podports, fmt.Sprintf("%d", port.TargetPort))
+			// update nginx config
+			nginxmanager.AddServiceRule(svc.Spec.ClusterIP, uint16(port.Port), pod.Status.PodIP, uint16(port.TargetPort))
+		}
+
+		svcMsg := apiobj.PodSvcMsg{
+			SvcIp:    svc.Spec.ClusterIP,
+			SvcPorts: svcports,
+			PodIp:    pod.Status.PodIP,
+			PodPorts: podports,
+		}
+
+		svcMsgJson, _ := json.Marshal(svcMsg)
+		msg := message.Message{
+			Type:    "Update",
+			URL:     key,
+			Name:    "Add",
+			Content: string(svcMsgJson),
+		}
+		msgJson, _ := json.Marshal(msg)
+
+		p := message.NewPublisher()
+		defer p.Close()
+
+		nodeKey := etcd.PATH_EtcdNodes
+		resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+		for _, item := range resList {
+			var node apiobj.Node
+			json.Unmarshal([]byte(item), &node)
+			que := fmt.Sprintf(message.ServiceQueue+"-%s", node.MetaData.Name)
+			p.Publish(que, msgJson)
+		}
+
+	}
+
+	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
 }
 
 func GetPod(c *gin.Context) {
@@ -146,4 +329,31 @@ func GetPodStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": string(statusJson),
 	})
+}
+
+func UpdatePodStatus(c *gin.Context) {
+	fmt.Println("updatePodStatus")
+
+	var podStatus apiobj.PodStatus
+	c.ShouldBind(&podStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	key := fmt.Sprintf(etcd.PATH_EtcdPods+"/%s/%s", namespace, name)
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
+	if res == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+		return
+	}
+
+	var pod apiobj.Pod
+	json.Unmarshal([]byte(res), &pod)
+	pod.Status = podStatus
+
+	podJson, _ := json.Marshal(pod)
+	etcd.EtcdKV.Put(key, podJson)
+	c.JSON(http.StatusOK, gin.H{"update": string(podJson)})
 }

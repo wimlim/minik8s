@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Workflow
+metadata:
+  name: example-workflow
+  namespace: default
+spec:
+  entryName: node1
+  entryParam: {a: 1, b: 2}
+  workflowNodes:
+    - name: node1
+      type: Function
+      funcNode:
+        funcNameSpace: default
+        funcName: funcadd
+        nextNodeName: node2
+        funcParam: ["a", "b"]
+    - name: node2
+      type: Choice
+      choiceNode:
+        expression: "$result > 10"
+        trueNodeName: end
+        trueEntryParam: {a: $result, b: 1}
+        falseNodeName: node1
+        falseEntryParam: {a: $result, b: 2}

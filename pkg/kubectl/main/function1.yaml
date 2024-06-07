@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Function
+metadata:
+  name: funcfind
+  namespace: default
+spec:
+  path: python/func1.py

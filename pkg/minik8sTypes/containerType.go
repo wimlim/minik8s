@@ -34,6 +34,16 @@ type ContainerConfig struct {
 }
 
 /*
+	提交 pod status 必要的参数
+*/
+
+type PodIdentifier struct {
+	PodId        string
+	PodName      string
+	PodNamespace string
+}
+
+/*
 	container	创建需要的const
 */
 

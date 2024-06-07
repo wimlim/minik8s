@@ -6,6 +6,7 @@ import (
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
 	"net/http"
+
 	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +46,7 @@ func AddReplicaSet(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdReplicas+"/%s/%s", namespace, name)
 
-	replicaSet.MetaData.UID = uuid.New().String()
+	replicaSet.MetaData.UID = uuid.New().String()[:16]
 
 	replicaSetJson, err := json.Marshal(replicaSet)
 	if err != nil {
@@ -110,4 +111,29 @@ func GetReplicaSetStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": string(res),
 	})
+}
+
+func UpdateReplicaSetStatus(c *gin.Context) {
+	var replicaSetStatus apiobj.ReplicaSetStatus
+	c.ShouldBind(&replicaSetStatus)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	key := fmt.Sprintf(etcd.PATH_EtcdReplicas+"/%s/%s", namespace, name)
+
+	res, err := etcd.EtcdKV.Get(key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
+	}
+
+	var replicaSet apiobj.ReplicaSet
+	json.Unmarshal([]byte(res), &replicaSet)
+	replicaSet.Status = replicaSetStatus
+	
+	replicaSetJson, err := json.Marshal(replicaSet)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
+	}
+
+	etcd.EtcdKV.Put(key, replicaSetJson)
+	c.JSON(http.StatusOK, gin.H{"update": string(replicaSetJson)})
 }

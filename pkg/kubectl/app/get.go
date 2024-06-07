@@ -56,17 +56,25 @@ func getHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.Hpa{}
 	case "Dns":
 		apiObject = &apiobj.Dns{}
+	case "Function":
+		apiObject = &apiobj.Function{}
+	case "Workflow":
+		apiObject = &apiobj.Workflow{}
+	case "PV":
+		apiObject = &apiobj.PV{}
+	case "PVC":
+		apiObject = &apiobj.PVC{}
 	}
 
-	getApiObject(args[1], apiObject)
+	getApiObject(args[1], apiObject, kind)
 }
 
-func getApiObject(arg string, apiObject apiobj.ApiObject) {
+func getApiObject(arg string, apiObject apiobj.ApiObject, kind string) {
 	namespace_obj := strings.Split(arg, "/")
 	namespace_name := namespace_obj[0]
 	obj_name := namespace_obj[1]
 
-	URL := apiconfig.Kind2URL[apiObject.GetKind()]
+	URL := apiconfig.Kind2URL[kind]
 	URL = strings.Replace(URL, ":namespace", namespace_name, -1)
 	URL = strings.Replace(URL, ":name", obj_name, -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
@@ -75,7 +83,7 @@ func getApiObject(arg string, apiObject apiobj.ApiObject) {
 
 	response, err := http.Get(HttpUrl)
 	if err != nil {
-		fmt.Printf("get %s error", apiObject.GetKind())
+		fmt.Printf("get %s error", kind)
 		return
 	}
 	defer response.Body.Close()
@@ -119,7 +127,7 @@ func PrintNodesTable(nodes []apiobj.Node) {
 func PrintPodsTable(pods []apiobj.Pod) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Pod Name", "Namespace", "Containers"})
+	t.AppendHeader(table.Row{"Pod Name", "Node", "Ip", "Containers"})
 
 	// 添加数据行
 	for _, pod := range pods {
@@ -130,7 +138,7 @@ func PrintPodsTable(pods []apiobj.Pod) {
 		// 删除最后一个换行符
 		containers = strings.TrimSuffix(containers, "\n")
 
-		t.AppendRow([]interface{}{pod.MetaData.Name, pod.MetaData.Namespace, containers})
+		t.AppendRow([]interface{}{pod.MetaData.Name, pod.Spec.NodeName, pod.Status.PodIP, containers})
 	}
 
 	t.Render()

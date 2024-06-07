@@ -19,6 +19,7 @@ func init() {
 	AllCommands.AddCommand(deleteCmd)
 	AllCommands.AddCommand(getCmd)
 	AllCommands.AddCommand(describeCmd)
+	AllCommands.AddCommand(invokeCmd)
 }
 
 func Execute() {
