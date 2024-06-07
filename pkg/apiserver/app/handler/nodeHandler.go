@@ -116,6 +116,10 @@ func UpdateNodeStatus(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"get": "fail"})
 	}
+	if res == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"no such": "node"})
+		return
+	}
 
 	var node apiobj.Node
 	json.Unmarshal([]byte(res), &node)
