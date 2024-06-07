@@ -41,8 +41,8 @@ func init() {
 
 	var nodeConfig NodeConfig
 	_ = yaml.Unmarshal(content, &nodeConfig)
-	ServerMasterIP = nodeConfig.ApiServerIP
-	ServerDefaultPort = nodeConfig.ApiServerPort
+	ServerMasterIP = nodeConfig.ServerlessIP
+	ServerDefaultPort = nodeConfig.ServerlessPort
 }
 
 func GetMasterIP() string {

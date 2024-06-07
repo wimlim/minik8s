@@ -1,0 +1,10 @@
+kind: Pod
+metadata:
+  name: http-server-7
+spec:
+  containers:
+    - name: http-server
+      image: python:3.9-alpine
+      command: ["python", "-m", "http.server", "4335"]
+      ports:
+        - containerPort: 4335
