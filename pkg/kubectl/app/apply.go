@@ -69,6 +69,8 @@ func applyHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.PV{}
 	case "PVC":
 		apiObject = &apiobj.PVC{}
+	case "Job":
+		apiObject = &apiobj.Job{}
 	}
 
 	applyApiObject(content, apiObject)

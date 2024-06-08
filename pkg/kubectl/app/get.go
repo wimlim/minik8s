@@ -64,6 +64,8 @@ func getHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.PV{}
 	case "PVC":
 		apiObject = &apiobj.PVC{}
+	case "Job":
+		apiObject = &apiobj.Job{}
 	}
 
 	getApiObject(args[1], apiObject, kind)

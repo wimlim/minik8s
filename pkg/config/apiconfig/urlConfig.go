@@ -49,6 +49,11 @@ const (
 	URL_GlobalPVCs = "/api/v1/pvcs"
 	URL_AllPVCs    = "/api/v1/namespaces/:namespace/pvcs"
 	URL_PVC        = "/api/v1/namespaces/:namespace/pvcs/:name"
+
+	URL_GlobalJobs = "/api/v1/jobs"
+	URL_AllJobs    = "/api/v1/namespaces/:namespace/jobs"
+	URL_Job        = "/api/v1/namespaces/:namespace/jobs/:name"
+	URL_JobStatus  = "/api/v1/namespaces/:namespace/jobs/:name/status"
 )
 
 var Kind2URL = map[string]string{
@@ -62,4 +67,5 @@ var Kind2URL = map[string]string{
 	"Workflow":   URL_Workflow,
 	"PV":         URL_PV,
 	"PVC":        URL_PVC,
+	"Job":        URL_Job,
 }
