@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Workflow
+metadata:
+  name: example-workflow
+  namespace: default
+spec:
+  entryName: func1
+  entryParam: {path: /datafiles/input, kind: jpg}
+  workflowNodes:
+    - name: func1
+      type: Function
+      funcNode:
+        funcNameSpace: default
+        funcName: funcfind
+        nextNodeName: choice1
+        funcParam: ["path", "kind"]
+    - name: choice1
+      type: Choice
+      choiceNode:
+        expression: "$num == 0"
+        trueNodeName: end
+        trueEntryParam: {}
+        falseNodeName: func2
+        falseEntryParam: {names: $names}
+    - name: func2
+      type: Function
+      funcNode:
+        funcNameSpace: default
+        funcName: functhumbnail
+        nextNodeName: choice1
+        funcParam: ["names"]

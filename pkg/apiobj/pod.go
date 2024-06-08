@@ -14,6 +14,10 @@ const (
 	PodPhase_Unknown   = "Unknown"
 )
 
+type PersistentVolumeClaim struct {
+	ClaimName string `yaml:"claimName" json:"claimName"`
+}
+
 type VolumeMount struct {
 	Name      string `yaml:"name" json:"name"`
 	MountPath string `yaml:"mountPath" json:"mountPath"`
@@ -60,8 +64,9 @@ type HostPath struct {
 }
 
 type Volume struct {
-	Name     string   `yaml:"name" json:"name"`
-	HostPath HostPath `yaml:"hostPath" json:"hostPath"`
+	Name                  string                `yaml:"name" json:"name"`
+	HostPath              HostPath              `yaml:"hostPath" json:"hostPath"`
+	PersistentVolumeClaim PersistentVolumeClaim `yaml:"persistentVolumeClaim" json:"persistentVolumeClaim"`
 }
 
 type PodSpec struct {
@@ -86,6 +91,18 @@ type Pod struct {
 	MetaData   MetaData  `yaml:"metadata" json:"metadata"`
 	Spec       PodSpec   `yaml:"spec" json:"spec"`
 	Status     PodStatus `yaml:"status" json:"status"`
+	Monitor    Monitor   `yaml:"monitor" json:"monitor"`
+}
+
+type Monitor struct {
+	MetricsPorts []string `yaml:"metricsPorts" json:"metricsPorts"`
+}
+
+type PodSvcMsg struct {
+	SvcIp    string   `yaml:"svcIp" json:"svcIp"`
+	SvcPorts []string `yaml:"svcPorts" json:"svcPorts"`
+	PodIp    string   `yaml:"podIp" json:"podIp"`
+	PodPorts []string `yaml:"podPorts" json:"podPorts"`
 }
 
 func (p *Pod) GetKind() string {

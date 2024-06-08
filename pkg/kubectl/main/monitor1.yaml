@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: myprogram:latest
+    ports:
+    - containerPort: 12345
+monitor:
+  metricsPorts: ["12345"]

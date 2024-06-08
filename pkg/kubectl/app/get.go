@@ -60,6 +60,10 @@ func getHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.Function{}
 	case "Workflow":
 		apiObject = &apiobj.Workflow{}
+	case "PV":
+		apiObject = &apiobj.PV{}
+	case "PVC":
+		apiObject = &apiobj.PVC{}
 	}
 
 	getApiObject(args[1], apiObject, kind)
@@ -123,7 +127,7 @@ func PrintNodesTable(nodes []apiobj.Node) {
 func PrintPodsTable(pods []apiobj.Pod) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Pod Name", "Namespace", "Containers"})
+	t.AppendHeader(table.Row{"Pod Name", "Node", "Ip", "Containers"})
 
 	// 添加数据行
 	for _, pod := range pods {
@@ -134,7 +138,7 @@ func PrintPodsTable(pods []apiobj.Pod) {
 		// 删除最后一个换行符
 		containers = strings.TrimSuffix(containers, "\n")
 
-		t.AppendRow([]interface{}{pod.MetaData.Name, pod.MetaData.Namespace, containers})
+		t.AppendRow([]interface{}{pod.MetaData.Name, pod.Spec.NodeName, pod.Status.PodIP, containers})
 	}
 
 	t.Render()

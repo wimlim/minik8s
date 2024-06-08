@@ -2,24 +2,53 @@ package serverlessconfig
 
 import (
 	"fmt"
+	"io"
+	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 const (
-	URL_HttpTrigger        = "/namespaces/:namespace/functions/:name"
-	
+	URL_HttpTrigger       = "/:namespace/:name"
 	ServerDefaultListenIp = "0.0.0.0"
-	ServerDefaultPort     = 8081
 	ServerLocalIP         = "127.0.0.1"
-	ServerMasterIP        = "10.119.13.134"
 )
 
+var ServerMasterIP = ""
+var ServerDefaultPort = 8081
+
+type NodeConfig struct {
+	ApiServerIP    string `yaml:"apiServerIP"`
+	ApiServerPort  int    `yaml:"apiServerPort"`
+	ServerlessIP   string `yaml:"serverlessIP"`
+	ServerlessPort int    `yaml:"serverlessPort"`
+}
+
+func init() {
+	// fmt.Println("serverConfig init")
+	fd, err := os.Open("/config.yaml")
+	if err != nil {
+		fmt.Println("open masterip.txt error")
+		return
+	}
+	defer fd.Close()
+
+	content, err := io.ReadAll(fd)
+	if err != nil {
+		fmt.Println("read masterip.txt error")
+		return
+	}
+
+	var nodeConfig NodeConfig
+	_ = yaml.Unmarshal(content, &nodeConfig)
+	ServerMasterIP = nodeConfig.ServerlessIP
+	ServerDefaultPort = nodeConfig.ServerlessPort
+}
+
 func GetMasterIP() string {
-	return ServerLocalIP
-	// return ServerMasterIP
+	return ServerMasterIP
 }
 func GetServerlessServerUrl() string {
-
-	serverless_ip := GetMasterIP()
-	ServerURL := fmt.Sprintf("http://"+serverless_ip+":%d", ServerDefaultPort)
+	ServerURL := fmt.Sprintf("http://"+ServerMasterIP+":%d", ServerDefaultPort)
 	return ServerURL
 }

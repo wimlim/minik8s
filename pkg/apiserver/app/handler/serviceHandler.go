@@ -7,7 +7,6 @@ import (
 	"minik8s/pkg/config/serviceconfig"
 	"minik8s/pkg/etcd"
 	"minik8s/pkg/message"
-	nginxmanager "minik8s/pkg/nginx/app"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -66,14 +65,10 @@ func AddService(c *gin.Context) {
 
 	service.MetaData.UID = uuid.New().String()[:16]
 
-	if service.Spec.Type == "ClusterIP" {
-		service.Spec.ClusterIP = serviceconfig.AllocateIp()
-	} else if service.Spec.Type == "NodePort" {
-		service.Spec.ClusterIP = "0.0.0.0"
-	}
+	service.Spec.ClusterIP = serviceconfig.AllocateIp()
 
 	// update nginx config
-	nginxmanager.AddServiceIPVS(service.Spec)
+	// nginxmanager.AddServiceIPVS(service.Spec)
 	serviceJson, err := json.Marshal(service)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"add": "fail"})
@@ -91,7 +86,16 @@ func AddService(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.ServiceQueue, msgJson)
+
+	nodeKey := etcd.PATH_EtcdNodes
+	resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+	for _, item := range resList {
+		var node apiobj.Node
+		json.Unmarshal([]byte(item), &node)
+		que := fmt.Sprintf(message.ServiceQueue+"-%s", node.MetaData.Name)
+		p.Publish(que, msgJson)
+	}
 }
 
 func UpdateService(c *gin.Context) {
@@ -134,7 +138,7 @@ func DeleteService(c *gin.Context) {
 	serviceIp := service.Spec.ClusterIP
 	serviceconfig.ReleaseIp(serviceIp)
 	// update nginx config
-	nginxmanager.DeleteServiceIPVS(service.Spec)
+	// nginxmanager.DeleteServiceIPVS(service.Spec)
 
 	err := etcd.EtcdKV.Delete(key)
 	if err != nil {
@@ -151,7 +155,16 @@ func DeleteService(c *gin.Context) {
 	msgJson, _ := json.Marshal(msg)
 	p := message.NewPublisher()
 	defer p.Close()
-	p.Publish(message.ServiceQueue, msgJson)
+
+	nodeKey := etcd.PATH_EtcdNodes
+	resList, _ := etcd.EtcdKV.GetPrefix(nodeKey)
+
+	for _, item := range resList {
+		var node apiobj.Node
+		json.Unmarshal([]byte(item), &node)
+		que := fmt.Sprintf(message.ServiceQueue+"-%s", node.MetaData.Name)
+		p.Publish(que, msgJson)
+	}
 }
 
 func GetServiceStatus(c *gin.Context) {
@@ -193,7 +206,7 @@ func UpdateServiceStatus(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"update": "fail"})
 	}
-	
+
 	etcd.EtcdKV.Put(key, serviceJson)
 	c.JSON(http.StatusOK, gin.H{"update": string(serviceJson)})
 }

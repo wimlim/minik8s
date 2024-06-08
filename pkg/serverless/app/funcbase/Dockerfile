@@ -1,5 +1,6 @@
 From python:3.7-slim
 
+RUN mkdir /datafiles
 COPY ./  /app
 WORKDIR /app
 # Install the function's dependencies
