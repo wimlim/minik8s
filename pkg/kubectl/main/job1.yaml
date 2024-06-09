@@ -3,3 +3,11 @@ kind: Job
 metadata:
   name: example-job
   namespace: default
+spec:
+  partition: dgx2
+  nodes: 1
+  ntasksPerNode: 6
+  cpusPerTask: 1
+  gres: gpu:1
+file:
+  /root/minik8s/pkg/jobserver/cuda_code/matrix_add.cu

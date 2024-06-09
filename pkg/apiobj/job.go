@@ -1,17 +1,19 @@
 package apiobj
 
 type JobSpec struct {
-	Replicas int                `yaml:"replicas" json:"replicas"`
-	Selector ReplicaSetSelector `yaml:"selector" json:"selector"`
-	Template PodTemplateSpec    `yaml:"template" json:"template"`
+	Partition     string `yaml:"partition" json:"partition"`
+	Nodes         int    `yaml:"nodes" json:"nodes"`
+	NtasksPerNode int    `yaml:"ntasksPerNode" json:"ntasksPerNode"`
+	CpusPerTask   int    `yaml:"cpusPerTask" json:"cpusPerTask"`
+	Gres          string `yaml:"gres" json:"gres"`
 }
 
 type Job struct {
-	ApiVersion string           `yaml:"apiVersion" json:"apiVersion"`
-	Kind       string           `yaml:"kind" json:"kind"`
-	MetaData   MetaData         `yaml:"metadata" json:"metadata"`
-	Spec       ReplicaSetSpec   `yaml:"spec" json:"spec"`
-	Status     ReplicaSetStatus `yaml:"status" json:"status"`
+	ApiVersion string   `yaml:"apiVersion" json:"apiVersion"`
+	Kind       string   `yaml:"kind" json:"kind"`
+	MetaData   MetaData `yaml:"metadata" json:"metadata"`
+	Spec       JobSpec  `yaml:"spec" json:"spec"`
+	File       string   `yaml:"file" json:"file"`
 }
 
 func (j *Job) GetKind() string {
