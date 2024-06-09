@@ -11,3 +11,6 @@ spec:
   gres: gpu:1
 file:
   /root/minik8s/pkg/jobserver/cuda_code/matrix_add.cu
+script: |
+  nvcc -o matrix_add matrix_add.cu
+  ./matrix_add

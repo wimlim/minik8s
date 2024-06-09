@@ -14,6 +14,7 @@ type Job struct {
 	MetaData   MetaData `yaml:"metadata" json:"metadata"`
 	Spec       JobSpec  `yaml:"spec" json:"spec"`
 	File       string   `yaml:"file" json:"file"`
+	Script     string   `yaml:"script" json:"script"`
 }
 
 func (j *Job) GetKind() string {

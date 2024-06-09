@@ -41,9 +41,8 @@ func NewJobServer() *JobServer {
 }
 
 func (js *JobServer) CreateJob(job *apiobj.Job) {
-	location := sshlocation + "job-" + job.MetaData.Name
 	// scp file to server
-	cmd := exec.Command("scp", "-r", job.File, location)
+	cmd := exec.Command("scp", "-r", job.File, sshlocation)
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println("Failed to scp file: ", err)
@@ -57,7 +56,7 @@ func (js *JobServer) CreateJob(job *apiobj.Job) {
 		return
 	}
 	// scp slurm
-	cmd = exec.Command("scp", "-r", slurmlocation+job.MetaData.Name+".slurm", location)
+	cmd = exec.Command("scp", "-r", slurmlocation+job.MetaData.Name+".slurm", sshlocation)
 	err = cmd.Run()
 	if err != nil {
 		fmt.Println("Failed to scp slurm script: ", err)
@@ -70,7 +69,8 @@ func (js *JobServer) CreateJob(job *apiobj.Job) {
 		return
 	}
 	defer session.Close()
-	err = session.Run("sbatch " + location + "/" + job.MetaData.Name + ".slurm")
+	err = session.Run("sbatch " + job.MetaData.Name + ".slurm")
+	fmt.Println("sbatch " + job.MetaData.Name + ".slurm")
 	if err != nil {
 		fmt.Println("Failed to run slurm script: ", err)
 		return
@@ -79,20 +79,18 @@ func (js *JobServer) CreateJob(job *apiobj.Job) {
 
 func generateSlurmScript(job *apiobj.Job) string {
 	script := `#!/bin/bash
-	#SBATCH --job-name=` + job.MetaData.Name + `
-	#SBATCH --partition=` + job.Spec.Partition + `
-	#SBATCH --output=` + job.MetaData.Name + `.out
-	#SBATCH --error=` + job.MetaData.Name + `.err
-	#SBATCH -N ` + fmt.Sprint(job.Spec.Nodes) + `
-	#SBATCH --ntasks-per-node=` + fmt.Sprint(job.Spec.NtasksPerNode) + `
-	#SBATCH --cpus-per-task=` + fmt.Sprint(job.Spec.CpusPerTask) + `
-	#SBATCH --gres=` + job.Spec.Gres + `
-	ulimit -s unlimited
-	ulimit -l unlimited
+#SBATCH --job-name=` + job.MetaData.Name + `
+#SBATCH --partition=` + job.Spec.Partition + `
+#SBATCH --output=` + job.MetaData.Name + `.out
+#SBATCH --error=` + job.MetaData.Name + `.err
+#SBATCH -N ` + fmt.Sprint(job.Spec.Nodes) + `
+#SBATCH --ntasks-per-node=` + fmt.Sprint(job.Spec.NtasksPerNode) + `
+#SBATCH --cpus-per-task=` + fmt.Sprint(job.Spec.CpusPerTask) + `
+#SBATCH --gres=` + job.Spec.Gres + `
+ulimit -s unlimited
+ulimit -l unlimited
 
-	module load cuda/12.1.1
-	nvcc ` + job.File + ` -o ` + job.MetaData.Name + `
-	./` + job.MetaData.Name
+module load cuda/12.1.1` + job.Script
 	return script
 }
 
@@ -101,7 +99,27 @@ func Run() {
 	defer jobServer.sshClient.Close()
 	defer jobServer.subscriber.Close()
 
-	fmt.Println("JobServer is running")
+	/* 	fmt.Println("JobServer is running")
+	   	jobserver := NewJobServer()
+	   	testjob := &apiobj.Job{
+	   		ApiVersion: "v1",
+	   		Kind:       "Job",
+	   		MetaData: apiobj.MetaData{
+	   			Name:      "testjob",
+	   			Namespace: "default",
+	   		},
+	   		Spec: apiobj.JobSpec{
+	   			Partition:     "dgx2",
+	   			Nodes:         1,
+	   			NtasksPerNode: 1,
+	   			CpusPerTask:   6,
+	   			Gres:          "gpu:1",
+	   		},
+	   		File:   "/root/minik8s/pkg/jobserver/cuda_code/matrix_add.cu",
+	   		Script: "\nnvcc -o matrix_add matrix_add.cu\n./matrix_add",
+	   	}
+	   	jobserver.CreateJob(testjob)
+	   	return */
 	jobServer.subscriber.Subscribe(message.JobQueue, func(d amqp.Delivery) {
 		var message message.Message
 		err := json.Unmarshal(d.Body, &message)
