@@ -151,6 +151,7 @@ func (s *server) Bind() {
 	s.router.DELETE((apiconfig.URL_Job), handler.DeleteJob)
 	s.router.PUT((apiconfig.URL_Job), handler.UpdateJob)
 	s.router.GET((apiconfig.URL_Job), handler.GetJob)
+	s.router.PUT((apiconfig.URL_JobStatus), handler.UpdateJobStatus)
 
 	fmt.Println("server bind success")
 }

@@ -1,13 +1,17 @@
 package jobserver
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"minik8s/pkg/apiobj"
+	"minik8s/pkg/config/apiconfig"
 	"minik8s/pkg/config/jobserverconfig"
 	"minik8s/pkg/message"
+	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/streadway/amqp"
@@ -152,33 +156,38 @@ module load cuda/12.1.1
 	return script
 }
 
+func (js *JobServer) updateJobStatus(job *apiobj.Job) {
+	URL := apiconfig.URL_JobStatus
+	URL = strings.Replace(URL, ":namespace", job.MetaData.Namespace, -1)
+	URL = strings.Replace(URL, ":name", job.MetaData.Name, -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+	job.Status.Phase = apiobj.Finished
+	jsonData, err := json.Marshal(job.Status)
+	if err != nil {
+		fmt.Println("marshal job error")
+		return
+	}
+	req, err := http.NewRequest(http.MethodPut, HttpUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("create put request error:", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Println("put error:", err)
+		return
+	}
+	defer response.Body.Close()
+}
+
 func Run() {
 	jobServer := NewJobServer()
 	defer jobServer.sshClient.Close()
 	defer jobServer.subscriber.Close()
 
 	fmt.Println("JobServer is running")
-	jobserver := NewJobServer()
-	testjob := &apiobj.Job{
-		ApiVersion: "v1",
-		Kind:       "Job",
-		MetaData: apiobj.MetaData{
-			Name:      "testjob",
-			Namespace: "default",
-		},
-		Spec: apiobj.JobSpec{
-			Partition:     "dgx2",
-			Nodes:         1,
-			NtasksPerNode: 1,
-			CpusPerTask:   6,
-			Gres:          "gpu:1",
-		},
-		File:   "/root/minik8s/pkg/jobserver/cuda_code/matrix_add.cu",
-		Script: "nvcc -o matrix_add matrix_add.cu\n./matrix_add",
-	}
-	jobserver.CreateJob(testjob)
-	jobServer.MonitorJob(testjob)
-	return
+
 	jobServer.subscriber.Subscribe(message.JobQueue, func(d amqp.Delivery) {
 		var message message.Message
 		err := json.Unmarshal(d.Body, &message)
@@ -192,6 +201,9 @@ func Run() {
 		switch message.Type {
 		case "Add":
 			jobServer.CreateJob(&job)
+			if jobServer.MonitorJob(&job) {
+				jobServer.updateJobStatus(&job)
+			}
 		}
 	})
 }

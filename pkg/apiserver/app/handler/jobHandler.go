@@ -3,8 +3,11 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"minik8s/pkg/apiobj"
 	"minik8s/pkg/etcd"
+	"minik8s/pkg/message"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,6 +48,7 @@ func AddJob(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdJobs+"/%s/%s", namespace, name)
 
+	job.Status.Phase = apiobj.Running
 	jobJson, err := json.Marshal(job)
 	if err != nil {
 		c.JSON(500, gin.H{"add": "fail"})
@@ -52,6 +56,19 @@ func AddJob(c *gin.Context) {
 
 	etcd.EtcdKV.Put(key, jobJson)
 	c.JSON(200, gin.H{"add": string(jobJson)})
+
+	msg := message.Message{
+		Type:    "Add",
+		URL:     key,
+		Name:    key,
+		Content: string(jobJson),
+	}
+	msgJson, _ := json.Marshal(msg)
+	p := message.NewPublisher()
+	defer p.Close()
+
+	p.Publish(message.JobQueue, msgJson)
+
 }
 
 func DeleteJob(c *gin.Context) {
@@ -97,4 +114,39 @@ func GetJob(c *gin.Context) {
 		c.JSON(500, gin.H{"get": "fail"})
 	}
 	c.JSON(200, gin.H{"data": string(res)})
+}
+
+func UpdateJobStatus(c *gin.Context) {
+	fmt.Println("updateJobStatus")
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	var jobStatus apiobj.JobStatus
+	c.ShouldBind(&jobStatus)
+
+	key := fmt.Sprintf(etcd.PATH_EtcdJobs+"/%s/%s", namespace, name)
+
+	res, _ := etcd.EtcdKV.Get(key)
+	var job apiobj.Job
+	json.Unmarshal([]byte(res), &job)
+	job.Status = jobStatus
+
+	filepath := fmt.Sprintf("/tmp/results/%s.out", job.MetaData.Name)
+	fd, err := os.Open(filepath)
+	if err != nil {
+		fmt.Println("open file error")
+		return
+	}
+	defer fd.Close()
+	content, err := io.ReadAll(fd)
+	if err != nil {
+		fmt.Println("read file error")
+		c.JSON(500, gin.H{"update": "fail"})
+	}
+
+	job.Status.Result = string(content)
+
+	jobJson, _ := json.Marshal(job)
+	etcd.EtcdKV.Put(key, jobJson)
+	c.JSON(200, gin.H{"update": "success"})
 }

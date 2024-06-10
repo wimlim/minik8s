@@ -6,7 +6,8 @@ const (
 )
 
 type JobStatus struct {
-	Phase string `yaml:"phase" json:"phase"`
+	Phase  string `yaml:"phase" json:"phase"`
+	Result string `yaml:"result" json:"result"`
 }
 
 type JobSpec struct {
