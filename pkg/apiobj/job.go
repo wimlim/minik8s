@@ -3,6 +3,7 @@ package apiobj
 const (
 	Running  = "Running"
 	Finished = "Finished"
+	Pending  = "Pending"
 )
 
 type JobStatus struct {

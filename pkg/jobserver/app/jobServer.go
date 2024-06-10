@@ -79,16 +79,34 @@ func (js *JobServer) CreateJob(job *apiobj.Job) {
 }
 
 func (js *JobServer) MonitorJob(job *apiobj.Job) bool {
-	timeout := time.After(1 * time.Minute)
-	tick := time.Tick(5 * time.Second)
+	timeout := time.After(1 * time.Hour)
+	ticker := time.NewTicker(5 * time.Second)
+	tick := ticker.C
+	defer ticker.Stop()
 	dir := sshlocation + job.MetaData.Name + "/"
+	state := apiobj.Pending
 	for {
 		select {
 		case <-timeout:
 			fmt.Println("Job timeout")
 			return false
 		case <-tick:
-			if !js.isJobRunning(job.MetaData.Name) {
+			switch js.getJobStatus(job.MetaData.Name) {
+			case apiobj.Pending:
+				if state != apiobj.Pending {
+					state = apiobj.Pending
+					job.Status.Phase = apiobj.Pending
+					fmt.Println("Job pending")
+					js.updateJobStatus(job)
+				}
+			case apiobj.Running:
+				if state != apiobj.Running {
+					fmt.Println("Job running")
+					state = apiobj.Running
+					job.Status.Phase = apiobj.Running
+					js.updateJobStatus(job)
+				}
+			case apiobj.Finished:
 				fmt.Println("Job finished")
 				// scp name.err & name.out
 				if err := scpFile(dir+job.MetaData.Name+".err", reslocation+job.MetaData.Name+".err"); err != nil {
@@ -101,24 +119,33 @@ func (js *JobServer) MonitorJob(job *apiobj.Job) bool {
 				if err := js.runCommand("rm -rf " + job.MetaData.Name); err != nil {
 					fmt.Println("Failed to remove workspace: ", err)
 				}
+				job.Status.Phase = apiobj.Finished
+				js.updateJobStatus(job)
 				return true
 			}
 		}
 	}
 }
 
-func (js *JobServer) isJobRunning(name string) bool {
+func (js *JobServer) getJobStatus(name string) string {
 	command := fmt.Sprintf("squeue | grep %s", name)
 	session, err := js.sshClient.NewSession()
 	if err != nil {
 		fmt.Println("Failed to create session: ", err)
-		return false
+		return "error"
 	}
 	defer session.Close()
-	if err := session.Run(command); err != nil {
-		return false
+	output, err := session.Output(command)
+	if err != nil {
+		return apiobj.Finished
 	}
-	return true
+	if strings.Contains(string(output), "PD") {
+		return apiobj.Pending
+	}
+	if strings.Contains(string(output), "R") {
+		return apiobj.Running
+	}
+	return apiobj.Finished
 }
 
 func (js *JobServer) runCommand(command string) error {
@@ -161,7 +188,6 @@ func (js *JobServer) updateJobStatus(job *apiobj.Job) {
 	URL = strings.Replace(URL, ":namespace", job.MetaData.Namespace, -1)
 	URL = strings.Replace(URL, ":name", job.MetaData.Name, -1)
 	HttpUrl := apiconfig.GetApiServerUrl() + URL
-	job.Status.Phase = apiobj.Finished
 	jsonData, err := json.Marshal(job.Status)
 	if err != nil {
 		fmt.Println("marshal job error")
@@ -200,10 +226,12 @@ func Run() {
 		}
 		switch message.Type {
 		case "Add":
-			jobServer.CreateJob(&job)
-			if jobServer.MonitorJob(&job) {
-				jobServer.updateJobStatus(&job)
-			}
+			go func(job apiobj.Job) {
+				jobServer.CreateJob(&job)
+				if !jobServer.MonitorJob(&job) {
+					fmt.Println("Job failed")
+				}
+			}(job)
 		}
 	})
 }

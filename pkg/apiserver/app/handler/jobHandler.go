@@ -48,7 +48,7 @@ func AddJob(c *gin.Context) {
 	name := c.Param("name")
 	key := fmt.Sprintf(etcd.PATH_EtcdJobs+"/%s/%s", namespace, name)
 
-	job.Status.Phase = apiobj.Running
+	job.Status.Phase = apiobj.Pending
 	jobJson, err := json.Marshal(job)
 	if err != nil {
 		c.JSON(500, gin.H{"add": "fail"})
@@ -148,5 +148,12 @@ func UpdateJobStatus(c *gin.Context) {
 
 	jobJson, _ := json.Marshal(job)
 	etcd.EtcdKV.Put(key, jobJson)
+
+	if job.Status.Phase == apiobj.Finished {
+		out_filepath := fmt.Sprintf("/tmp/results/%s.out", job.MetaData.Name)
+		err_filepath := fmt.Sprintf("/tmp/results/%s.err", job.MetaData.Name)
+		os.Remove(out_filepath)
+		os.Remove(err_filepath)
+	}
 	c.JSON(200, gin.H{"update": "success"})
 }
