@@ -1,5 +1,14 @@
 package apiobj
 
+const (
+	Running  = "Running"
+	Finished = "Finished"
+)
+
+type JobStatus struct {
+	Phase string `yaml:"phase" json:"phase"`
+}
+
 type JobSpec struct {
 	Partition     string `yaml:"partition" json:"partition"`
 	Nodes         int    `yaml:"nodes" json:"nodes"`
@@ -9,12 +18,13 @@ type JobSpec struct {
 }
 
 type Job struct {
-	ApiVersion string   `yaml:"apiVersion" json:"apiVersion"`
-	Kind       string   `yaml:"kind" json:"kind"`
-	MetaData   MetaData `yaml:"metadata" json:"metadata"`
-	Spec       JobSpec  `yaml:"spec" json:"spec"`
-	File       string   `yaml:"file" json:"file"`
-	Script     string   `yaml:"script" json:"script"`
+	ApiVersion string    `yaml:"apiVersion" json:"apiVersion"`
+	Kind       string    `yaml:"kind" json:"kind"`
+	MetaData   MetaData  `yaml:"metadata" json:"metadata"`
+	Spec       JobSpec   `yaml:"spec" json:"spec"`
+	Status     JobStatus `yaml:"status" json:"status"`
+	File       string    `yaml:"file" json:"file"`
+	Script     string    `yaml:"script" json:"script"`
 }
 
 func (j *Job) GetKind() string {

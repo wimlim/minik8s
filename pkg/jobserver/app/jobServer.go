@@ -67,7 +67,7 @@ func (js *JobServer) CreateJob(job *apiobj.Job) {
 		return
 	}
 	// run slurm
-	slurmCommand := fmt.Sprintf("sbatch %s/%s.slurm", job.MetaData.Name, job.MetaData.Name)
+	slurmCommand := fmt.Sprintf("cd %s && sbatch %s.slurm", job.MetaData.Name, job.MetaData.Name)
 	if err := js.runCommand(slurmCommand); err != nil {
 		fmt.Println("Failed to run slurm script: ", err)
 		return
@@ -77,6 +77,7 @@ func (js *JobServer) CreateJob(job *apiobj.Job) {
 func (js *JobServer) MonitorJob(job *apiobj.Job) bool {
 	timeout := time.After(1 * time.Minute)
 	tick := time.Tick(5 * time.Second)
+	dir := sshlocation + job.MetaData.Name + "/"
 	for {
 		select {
 		case <-timeout:
@@ -86,26 +87,18 @@ func (js *JobServer) MonitorJob(job *apiobj.Job) bool {
 			if !js.isJobRunning(job.MetaData.Name) {
 				fmt.Println("Job finished")
 				// scp name.err & name.out
-				if err := scpFile(sshlocation+job.MetaData.Name+".err", reslocation+job.MetaData.Name+".err"); err != nil {
+				if err := scpFile(dir+job.MetaData.Name+".err", reslocation+job.MetaData.Name+".err"); err != nil {
 					fmt.Println("Failed to scp err file: ", err)
 				}
-				if err := scpFile(sshlocation+job.MetaData.Name+".out", reslocation+job.MetaData.Name+".out"); err != nil {
+				if err := scpFile(dir+job.MetaData.Name+".out", reslocation+job.MetaData.Name+".out"); err != nil {
 					fmt.Println("Failed to scp out file: ", err)
 				}
 				// rmdir
 				if err := js.runCommand("rm -rf " + job.MetaData.Name); err != nil {
 					fmt.Println("Failed to remove workspace: ", err)
 				}
-				// rm err & out
-				if err := js.runCommand("rm -f " + job.MetaData.Name + ".err"); err != nil {
-					fmt.Println("Failed to remove err file: ", err)
-				}
-				if err := js.runCommand("rm -f " + job.MetaData.Name + ".out"); err != nil {
-					fmt.Println("Failed to remove out file: ", err)
-				}
 				return true
 			}
-			fmt.Println("Job running")
 		}
 	}
 }
@@ -154,7 +147,8 @@ func generateSlurmScript(job *apiobj.Job) string {
 ulimit -s unlimited
 ulimit -l unlimited
 
-module load cuda/12.1.1` + job.Script
+module load cuda/12.1.1
+` + job.Script
 	return script
 }
 
@@ -180,7 +174,7 @@ func Run() {
 			Gres:          "gpu:1",
 		},
 		File:   "/root/minik8s/pkg/jobserver/cuda_code/matrix_add.cu",
-		Script: "\nnvcc -o matrix_add matrix_add.cu\n./matrix_add",
+		Script: "nvcc -o matrix_add matrix_add.cu\n./matrix_add",
 	}
 	jobserver.CreateJob(testjob)
 	jobServer.MonitorJob(testjob)
@@ -198,9 +192,6 @@ func Run() {
 		switch message.Type {
 		case "Add":
 			jobServer.CreateJob(&job)
-		case "Get":
-
 		}
-
 	})
 }
