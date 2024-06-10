@@ -41,40 +41,52 @@ func NewJobServer() *JobServer {
 }
 
 func (js *JobServer) CreateJob(job *apiobj.Job) {
+	workspace := sshlocation + job.MetaData.Name
+	// mkdir
+	if err := js.runCommand("mkdir -p " + job.MetaData.Name); err != nil {
+		fmt.Println("Failed to create workspace: ", err)
+		return
+	}
 	// scp file to server
-	cmd := exec.Command("scp", "-r", job.File, sshlocation)
-	err := cmd.Run()
-	if err != nil {
+	if err := scpFile(job.File, workspace); err != nil {
 		fmt.Println("Failed to scp file: ", err)
 		return
 	}
 	// create slurm script in /tmp/jobs/name.slurm
+	scriptPath := slurmlocation + job.MetaData.Name + ".slurm"
 	script := generateSlurmScript(job)
-	err = os.WriteFile(slurmlocation+job.MetaData.Name+".slurm", []byte(script), 0644)
-	if err != nil {
+	if err := os.WriteFile(scriptPath, []byte(script), 0644); err != nil {
 		fmt.Println("Failed to write slurm script: ", err)
 		return
 	}
 	// scp slurm
-	cmd = exec.Command("scp", "-r", slurmlocation+job.MetaData.Name+".slurm", sshlocation)
-	err = cmd.Run()
-	if err != nil {
+	if err := scpFile(scriptPath, workspace); err != nil {
 		fmt.Println("Failed to scp slurm script: ", err)
 		return
 	}
 	// run slurm
-	session, err := js.sshClient.NewSession()
-	if err != nil {
-		fmt.Println("Failed to create session: ", err)
-		return
-	}
-	defer session.Close()
-	err = session.Run("sbatch " + job.MetaData.Name + ".slurm")
-	fmt.Println("sbatch " + job.MetaData.Name + ".slurm")
-	if err != nil {
+	slurmCommand := fmt.Sprintf("sbatch %s/%s.slurm", job.MetaData.Name, job.MetaData.Name)
+	if err := js.runCommand(slurmCommand); err != nil {
 		fmt.Println("Failed to run slurm script: ", err)
 		return
 	}
+}
+
+func (js *JobServer) runCommand(command string) error {
+	session, err := js.sshClient.NewSession()
+	if err != nil {
+		return fmt.Errorf("failed to create session: %v", err)
+	}
+	defer session.Close()
+	if err := session.Run(command); err != nil {
+		return fmt.Errorf("command failed: %v", err)
+	}
+	return nil
+}
+
+func scpFile(localPath, remotePath string) error {
+	cmd := exec.Command("scp", "-r", localPath, remotePath)
+	return cmd.Run()
 }
 
 func generateSlurmScript(job *apiobj.Job) string {
@@ -99,27 +111,27 @@ func Run() {
 	defer jobServer.sshClient.Close()
 	defer jobServer.subscriber.Close()
 
-	/* 	fmt.Println("JobServer is running")
-	   	jobserver := NewJobServer()
-	   	testjob := &apiobj.Job{
-	   		ApiVersion: "v1",
-	   		Kind:       "Job",
-	   		MetaData: apiobj.MetaData{
-	   			Name:      "testjob",
-	   			Namespace: "default",
-	   		},
-	   		Spec: apiobj.JobSpec{
-	   			Partition:     "dgx2",
-	   			Nodes:         1,
-	   			NtasksPerNode: 1,
-	   			CpusPerTask:   6,
-	   			Gres:          "gpu:1",
-	   		},
-	   		File:   "/root/minik8s/pkg/jobserver/cuda_code/matrix_add.cu",
-	   		Script: "\nnvcc -o matrix_add matrix_add.cu\n./matrix_add",
-	   	}
-	   	jobserver.CreateJob(testjob)
-	   	return */
+	fmt.Println("JobServer is running")
+	jobserver := NewJobServer()
+	testjob := &apiobj.Job{
+		ApiVersion: "v1",
+		Kind:       "Job",
+		MetaData: apiobj.MetaData{
+			Name:      "testjob",
+			Namespace: "default",
+		},
+		Spec: apiobj.JobSpec{
+			Partition:     "dgx2",
+			Nodes:         1,
+			NtasksPerNode: 1,
+			CpusPerTask:   6,
+			Gres:          "gpu:1",
+		},
+		File:   "/root/minik8s/pkg/jobserver/cuda_code/matrix_add.cu",
+		Script: "\nnvcc -o matrix_add matrix_add.cu\n./matrix_add",
+	}
+	jobserver.CreateJob(testjob)
+	return
 	jobServer.subscriber.Subscribe(message.JobQueue, func(d amqp.Delivery) {
 		var message message.Message
 		err := json.Unmarshal(d.Body, &message)
@@ -133,7 +145,7 @@ func Run() {
 		switch message.Type {
 		case "Add":
 			jobServer.CreateJob(&job)
-		case "Query":
+		case "Get":
 
 		}
 
