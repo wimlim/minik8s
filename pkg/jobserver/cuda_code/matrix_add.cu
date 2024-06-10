@@ -23,6 +23,11 @@ int main() {
     int *host_B = (int *)malloc(nbytes);
     int *host_C = (int *)malloc(nbytes);
 
+    for (int i = 0; i < num_elements; i++) {
+        host_A[i] = i;
+        host_B[i] = i;
+    }
+
     int *dev_A, *dev_B, *dev_C;
     cudaMalloc((void **)&dev_A, nbytes);
     cudaMalloc((void **)&dev_B, nbytes);
@@ -32,6 +37,12 @@ int main() {
     cudaMemcpy(dev_B, host_B, nbytes, cudaMemcpyHostToDevice);
     cudaMemset(dev_C, 0, nbytes);
 
+    dim3 threadsPerBlock(8, 8);
+    dim3 numBlocks(N / threadsPerBlock.x, M / threadsPerBlock.y);
+    
+    matrix_add<<<numBlocks, threadsPerBlock>>>(dev_A, dev_B, dev_C, N);
+
+    cudaDeviceSynchronize();
     cudaMemcpy(host_C, dev_C, nbytes, cudaMemcpyDeviceToHost);
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < N; j++) {
