@@ -8,6 +8,7 @@ import (
 	"minik8s/pkg/message"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/streadway/amqp"
 	"golang.org/x/crypto/ssh"
@@ -15,6 +16,7 @@ import (
 
 const sshlocation = "stu1938@pilogin.hpc.sjtu.edu.cn:/lustre/home/acct-stu/stu1938/"
 const slurmlocation = "/tmp/jobs/"
+const reslocation = "/tmp/results/"
 
 type JobServer struct {
 	sshClient  *ssh.Client
@@ -70,6 +72,56 @@ func (js *JobServer) CreateJob(job *apiobj.Job) {
 		fmt.Println("Failed to run slurm script: ", err)
 		return
 	}
+}
+
+func (js *JobServer) MonitorJob(job *apiobj.Job) bool {
+	timeout := time.After(1 * time.Minute)
+	tick := time.Tick(5 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			fmt.Println("Job timeout")
+			return false
+		case <-tick:
+			if !js.isJobRunning(job.MetaData.Name) {
+				fmt.Println("Job finished")
+				// scp name.err & name.out
+				if err := scpFile(sshlocation+job.MetaData.Name+".err", reslocation+job.MetaData.Name+".err"); err != nil {
+					fmt.Println("Failed to scp err file: ", err)
+				}
+				if err := scpFile(sshlocation+job.MetaData.Name+".out", reslocation+job.MetaData.Name+".out"); err != nil {
+					fmt.Println("Failed to scp out file: ", err)
+				}
+				// rmdir
+				if err := js.runCommand("rm -rf " + job.MetaData.Name); err != nil {
+					fmt.Println("Failed to remove workspace: ", err)
+				}
+				// rm err & out
+				if err := js.runCommand("rm -f " + job.MetaData.Name + ".err"); err != nil {
+					fmt.Println("Failed to remove err file: ", err)
+				}
+				if err := js.runCommand("rm -f " + job.MetaData.Name + ".out"); err != nil {
+					fmt.Println("Failed to remove out file: ", err)
+				}
+				return true
+			}
+			fmt.Println("Job running")
+		}
+	}
+}
+
+func (js *JobServer) isJobRunning(name string) bool {
+	command := fmt.Sprintf("squeue | grep %s", name)
+	session, err := js.sshClient.NewSession()
+	if err != nil {
+		fmt.Println("Failed to create session: ", err)
+		return false
+	}
+	defer session.Close()
+	if err := session.Run(command); err != nil {
+		return false
+	}
+	return true
 }
 
 func (js *JobServer) runCommand(command string) error {
@@ -131,6 +183,7 @@ func Run() {
 		Script: "\nnvcc -o matrix_add matrix_add.cu\n./matrix_add",
 	}
 	jobserver.CreateJob(testjob)
+	jobServer.MonitorJob(testjob)
 	return
 	jobServer.subscriber.Subscribe(message.JobQueue, func(d amqp.Delivery) {
 		var message message.Message
