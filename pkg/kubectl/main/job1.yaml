@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Job
+metadata:
+  name: job1
+  namespace: default
+spec:
+  partition: dgx2
+  nodes: 1
+  ntasksPerNode: 6
+  cpusPerTask: 1
+  gres: gpu:1
+file:
+  /root/minik8s/pkg/jobserver/cuda_code/matrix_add.cu
+script: |
+  nvcc -o matrix_add matrix_add.cu
+  ./matrix_add

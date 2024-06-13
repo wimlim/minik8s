@@ -64,6 +64,11 @@ func getHandler(cmd *cobra.Command, args []string) {
 		apiObject = &apiobj.PV{}
 	case "PVC":
 		apiObject = &apiobj.PVC{}
+	case "Job":
+		apiObject = &apiobj.Job{}
+	case "Result":
+		getJobResult(args[1])
+		return
 	}
 
 	getApiObject(args[1], apiObject, kind)
@@ -142,4 +147,44 @@ func PrintPodsTable(pods []apiobj.Pod) {
 	}
 
 	t.Render()
+}
+
+func getJobResult(name string){
+
+	namespace := "default"
+
+	URL := apiconfig.URL_Job
+	URL = strings.Replace(URL, ":namespace", namespace, -1)
+	URL = strings.Replace(URL, ":name", name, -1)
+	HttpUrl := apiconfig.GetApiServerUrl() + URL
+
+	response, err := http.Get(HttpUrl)
+	if err != nil {
+		fmt.Printf("get result error")
+		return
+	}
+	defer response.Body.Close()
+
+	var res map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&res)
+	if err != nil {
+		fmt.Printf("decode result error\n")
+		return
+	}
+	data := res["data"].(string)
+
+	var job apiobj.Job
+	err = json.Unmarshal([]byte(data), &job)
+	if err != nil {
+		fmt.Printf("unmarshal result error\n")
+		return
+	}
+
+	if(job.Status.Phase == "Running"){
+		fmt.Println("Job is running, please wait for a moment.")
+		return
+	}else{
+		fmt.Println(job.Status.Result)
+	}
+
 }

@@ -26,6 +26,7 @@ const (
 	ServiceQueue  = "serviceQueue"
 	DnsQueue      = "dnsQueue"
 	WorkflowQueue = "workflowQueue"
+	JobQueue      = "jobQueue"
 )
 
 var Queue2Exchange = map[string]string{
@@ -34,4 +35,5 @@ var Queue2Exchange = map[string]string{
 	ServiceQueue:  "minik8s",
 	DnsQueue:      "minik8s",
 	WorkflowQueue: "minik8s",
+	JobQueue:      "minik8s",
 }

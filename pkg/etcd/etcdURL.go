@@ -14,4 +14,5 @@ const (
 	PATH_EtcdWorkflows = "/registry/workflows"
 	PATH_EtcdPVs       = "/registry/pvs"
 	PATH_EtcdPVCs      = "/registry/pvcs"
+	PATH_EtcdJobs      = "/registry/jobs"
 )

@@ -1,0 +1,10 @@
+kind: Pod
+metadata:
+  name: nginx-server
+  labels:
+spec:
+  containers:
+    - name: nginx-server
+      image: nginx:stable-alpine
+      ports:
+        - containerPort: 80

@@ -25,6 +25,8 @@ func GetRequest(namespace string, name string, kind string) (apiobj.ApiObject, e
 		apiObject = &apiobj.Hpa{}
 	case "Dns":
 		apiObject = &apiobj.Dns{}
+	case "Job":
+		apiObject = &apiobj.Job{}
 	}
 
 	URL := apiconfig.Kind2URL[kind]
